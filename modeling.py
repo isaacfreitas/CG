@@ -1,132 +1,209 @@
 import numpy as np
 from skimage.measure import marching_cubes
+from primitives import (
+    cilindro, cone_truncado, esfera, elipsoide, caixa, toro,
+    uniao, intersecao, subtracao, uniao_suave
+)
 
-def extrair_malha(funcao_campo, limites=(-5, 5), resolucao=50):
+
+def extrair_malha(funcao_campo, limites=(-5, 12), resolucao=100):
     """
-    Gera a grelha 3D e extrai vértices, faces e normais usando o algoritmo Marching Cubes.
-    Realiza o mapeamento rigoroso dos índices da matriz para o espaço contínuo de coordenadas.
+    Gera a grelha 3D e extrai vértices, faces e normais usando Marching Cubes.
     """
-    # 1. Cria a grelha do espaço escalar
     x, y, z = np.mgrid[
         limites[0]:limites[1]:complex(0, resolucao),
         limites[0]:limites[1]:complex(0, resolucao),
         limites[0]:limites[1]:complex(0, resolucao)
     ]
-    
-    # 2. Avalia a equação implícita F(x, y, z) em todos os pontos
     volume = funcao_campo(x, y, z)
-    
-    # 3. Extrai a geometria onde F(x, y, z) == 0.0 (superfície exata)
     vertices, faces, normals, values = marching_cubes(volume, level=0.0)
-    
-    # 4. Mapeamento Afim (Correção de Escala)
-    # A API retorna índices (0 a 49). Precisamos converter de volta para o espaço [-5, 5]
     passo = (limites[1] - limites[0]) / (resolucao - 1)
     vertices = (vertices * passo) + limites[0]
-    
     return vertices, faces, normals
 
+
 # ==============================================================================
-# EQUAÇÕES IMPLÍCITAS F(x, y, z) PARA AS 6 PEÇAS
-# Valores negativos: Interior do sólido. Valores positivos: Exterior. Zero: Superfície.
+# PEÇAS — usando primitives.py
 # ==============================================================================
 
 def gerar_campo_dama(x, y, z):
-    """
-    Peça de Dama: Um cilindro achatado.
-    Equação do cilindro: x^2 + z^2 - R^2
-    Limitado superiormente e inferiormente por planos.
-    """
-    raio = 3.5
-    altura_meio = 0.5
-    
-    cilindro_infinito = x**2 + z**2 - raio**2
-    plano_topo = y - altura_meio     # Corta tudo acima de y = 0.5
-    plano_base = -y - altura_meio    # Corta tudo abaixo de y = -0.5
-    
-    # Intersecção: Máximo entre as funções
-    dama = np.maximum(cilindro_infinito, np.maximum(plano_topo, plano_base))
-    return dama
+    """Dama: disco tipo moeda com borda saliente e 3 ranhuras concêntricas."""
+    RAIO   = 2.3
+    ALTURA = 0.9
+    GROOVE = 0.18  # profundidade de cada ranhura (r_tubo do toro)
+
+    # Corpo: disco principal + anel lateral que forma a borda saliente
+    disco = cilindro(x, y, z, raio=RAIO,       y_min=0.0,         y_max=ALTURA)
+    borda = cilindro(x, y, z, raio=RAIO + 0.2, y_min=ALTURA*0.15, y_max=ALTURA*0.85)
+    corpo = uniao(disco, borda)
+
+    # 3 ranhuras no topo (toros centrados na face superior, cy=ALTURA)
+    topo_1 = toro(x, y, z, cx=0, cy=ALTURA, cz=0, r_maior=0.50, r_tubo=GROOVE)
+    topo_2 = toro(x, y, z, cx=0, cy=ALTURA, cz=0, r_maior=1.15, r_tubo=GROOVE)
+    topo_3 = toro(x, y, z, cx=0, cy=ALTURA, cz=0, r_maior=1.80, r_tubo=GROOVE)
+
+    # 3 ranhuras na base (espelhadas em cy=0.0)
+    base_1 = toro(x, y, z, cx=0, cy=0.0, cz=0, r_maior=0.50, r_tubo=GROOVE)
+    base_2 = toro(x, y, z, cx=0, cy=0.0, cz=0, r_maior=1.15, r_tubo=GROOVE)
+    base_3 = toro(x, y, z, cx=0, cy=0.0, cz=0, r_maior=1.80, r_tubo=GROOVE)
+
+    return subtracao(corpo, uniao(topo_1, topo_2, topo_3, base_1, base_2, base_3))
+
 
 def gerar_campo_peao(x, y, z):
-    """
-    Peão: Base cónica truncada unida a uma esfera no topo com pescoço definido.
-    """
-    # Topo: Esfera de raio 1.2 centrada em y = 3.5
-    esfera = x**2 + (y - 3.5)**2 + z**2 - 1.2**2
-    
-    # Base: Cone cuja espessura diminui conforme y cresce
-    cone = x**2 + z**2 - (2.0 - 0.4 * y)**2
-    
-    # Limita o cone na altura do pescoço (y = 3.0)
-    cone_limitado = np.maximum(cone, np.maximum(y - 3.0, -y))
-    
-    peao = np.minimum(esfera, cone_limitado)
-    return peao
+
+    base = cilindro(x, y, z,  raio=2, y_min=0.0, y_max=0.7)
+    corpo = cone_truncado(x, y, z, y_min=0.6, y_max=3.6, r_base=1.3, r_topo=0.3)
+    anel = cilindro(x, y, z, raio=1.3, y_min=3.0, y_max=3.5)
+    topo = esfera(x, y, z, cx=0, cy=4.2, cz=0, raio=0.9)
+
+    return uniao(
+        base, corpo, anel, topo
+    )
 
 def gerar_campo_torre(x, y, z):
     """
-    Torre: Cilindro grosso e perfeitamente reto.
+    Torre elaborada: construída por camadas simples, seguindo a mesma lógica
+    usada no peão e no bispo: base larga, corpo, anéis, topo e ameias.
     """
-    raio = 2.0
-    altura = 4.0
-    
-    cilindro = x**2 + z**2 - raio**2
-    
-    # Limita entre y = 0 e y = 4
-    torre = np.maximum(cilindro, np.maximum(y - altura, -y))
-    return torre
+
+    base_1 = cilindro(x, y, z, raio=2.3, y_min=0.0, y_max=0.5)
+    corpo_1 = cone_truncado(x, y, z, y_min=0.5, y_max=2.0, r_base=1.6, r_topo=1.1)
+    corpo_2 = cilindro(x, y, z, raio=1.1, y_min=0.4, y_max=3.5)
+
+    anel_topo = cilindro(x, y, z, raio=1.75, y_min=3.55, y_max=4.3)
+
+    miolo_topo = cilindro(x, y, z, raio=1.15, y_min=3.8, y_max=3.0)
+
+    ameia_frente = caixa(x, y, z, cx=0.0, cy=4.55, cz=1.15, hx=0.45, hy=0.45, hz=0.45)
+    ameia_tras = caixa(x, y, z, cx=0.0, cy=4.55, cz=-1.15, hx=0.45, hy=0.45, hz=0.45)
+    ameia_direita = caixa(x, y, z, cx=1.15, cy=4.55, cz=0.0, hx=0.45, hy=0.45, hz=0.45)
+    ameia_esquerda = caixa(x, y, z, cx=-1.15, cy=4.55, cz=0.0, hx=0.45, hy=0.45, hz=0.45)
+
+    abertura = cilindro(x, y, z, raio=0.65, y_min=3.05, y_max=5)
+
+    topo_com_ameias = subtracao(
+        uniao(
+            miolo_topo,
+            ameia_frente,
+            ameia_tras,
+            ameia_direita,
+            ameia_esquerda,
+        ),
+        abertura
+    )
+
+    return uniao(
+        base_1,
+        corpo_1,
+        corpo_2,
+        anel_topo,
+        miolo_topo,
+        topo_com_ameias,
+    )
+
 
 def gerar_campo_bispo(x, y, z):
-    """
-    Bispo: Cone alto e esbelto com uma pequena elipsoide/esfera no topo.
-    """
-    # Topo: Esfera menor (raio 1.0) em y = 4.5
-    esfera = x**2 + (y - 4.5)**2 + z**2 - 1.0**2
-    
-    # Corpo: Cone longo
-    cone = x**2 + z**2 - (2.0 - 0.25 * y)**2
-    cone_limitado = np.maximum(cone, np.maximum(y - 4.0, -y))
-    
-    bispo = np.minimum(esfera, cone_limitado)
-    return bispo
+    """Bispo: cone esbelto com esfera no topo."""
+
+    base = cilindro(x, y, z,  raio=2, y_min=0.0, y_max=0.7)
+    corpo_1 = cone_truncado(x, y, z, y_min=0.6, y_max=1.6, r_base=1.5, r_topo=0.8)
+    corpo_2 = cilindro(x, y, z, raio=0.8, y_min=1.5, y_max=3.0)
+    anel_1 = cilindro(x, y, z, raio=1.2, y_min=3.0, y_max=3.5)
+    anel_2 = cilindro(x, y, z, raio=1.5, y_min=3.5, y_max=4.0)
+    topo_1 = esfera(x, y, z, cx=0, cy=4.6, cz=0, raio=1)
+    topo_2 = esfera(x, y, z, cx=0, cy=6.0, cz=0, raio=0.5)
+
+    return uniao(
+        base, corpo_1, corpo_2, anel_1, anel_2, topo_1, topo_2
+    )
+
 
 def gerar_campo_rainha(x, y, z):
     """
-    Rainha: Corpo cónico muito alto, topo esférico com um adorno (coroa aproximada).
+    Rainha com perfil de vaso/taça:
+
+    CORPO (reformulado):
+      - Base disc larga
+      - Barriga arredondada via ELIPSOIDE (bojuda, não cônica)
+      - Afunilamento via CONE TRUNCADO do meio para a cintura
+      - UNIAO_SUAVE entre barriga e afunilamento elimina a aresta de junção
+      - Pescoço muito fino
+      - Aro da coroa (cilindro)
+
+    TOPO (mantido):
+      - 6 esferas-pontas em círculo (a cada 60°)
+      - Orbe central
     """
-    # Corpo principal
-    cone = x**2 + z**2 - (2.2 - 0.15 * y)**2
-    cone_limitado = np.maximum(cone, np.maximum(y - 6.0, -y))
-    
-    # Topo esférico (raio 1.2 em y = 6.5)
-    esfera = x**2 + (y - 6.5)**2 + z**2 - 1.2**2
-    
-    rainha = np.minimum(esfera, cone_limitado)
-    return rainha
+    # --- Coroa: mantida igual ---
+    r_coroa = 1.15
+    y_coroa = 6.05
+    r_ponta = 0.36
+
+    pontas_coroa = uniao(*[
+        esfera(x, y, z,
+               cx=r_coroa * np.cos(np.radians(ang)),
+               cy=y_coroa,
+               cz=r_coroa * np.sin(np.radians(ang)),
+               raio=r_ponta)
+        for ang in range(0, 360, 60)
+    ])
+
+    # Elipsoide bojudo na parte baixa: a=1.85 (horizontal), b=1.9 (vertical)
+    # centrado em y=1.2, cobre aproximadamente y ∈ [-0.7, 3.1]
+    barriga = elipsoide(x, y, z, cx=0, cy=1.9, cz=0, a=1.85, b=1.9)
+
+    # Cone que afunila do meio (r=1.35) até a cintura (r=0.52)
+    afunilamento = cone_truncado(x, y, z, y_min=2.6, y_max=4.9, r_base=1.35, r_topo=0.52)
+
+    # Smooth union funde as duas formas sem aresta visível na junção
+    corpo = uniao_suave(barriga, afunilamento, k=0.7)
+
+    return uniao(
+        cilindro(x, y, z, raio=2.2, y_min=0.0, y_max=0.55),   # base
+        corpo,                                                    # barriga + afunilamento
+        cilindro(x, y, z, raio=0.52, y_min=4.3, y_max=5.0),   # pescoço fino
+        cilindro(x, y, z, raio=1.55, y_min=4.8, y_max=5.8),   # aro da coroa
+        pontas_coroa, # 6 pontas
+        cilindro(x, y,z, raio=0.3, y_min=5.8, y_max=6.55),
+        esfera(x, y, z, cx=0, cy=6.55, cz=0, raio=0.52), # orbe
+    )
+
 
 def gerar_campo_rei(x, y, z):
     """
-    Rei: A peça mais alta. Cone encorpado com uma cruz (aproximada por blocos) no topo.
+    Rei com perfil de vaso (mesmo padrão da Rainha, ligeiramente mais robusto)
+    e cruz no topo.
+
+    CORPO:
+      - Base disc larga
+      - Barriga elipsoide (a=1.95, b=2.0 — mais encorpado que a Rainha)
+      - Afunilamento cônico até a cintura
+      - uniao_suave para fundir barriga e afunilamento
+      - Pescoço fino
+      - Colar (aro antes da cruz)
+      - Haste curta conectando colar à cruz
+
+    TOPO:
+      - Cruz: barra vertical + barra horizontal (dois blocos ortogonais)
+        centrados no mesmo ponto, a cruz resulta da união das caixas
     """
-    # Corpo principal (mais alto que a Rainha)
-    cone = x**2 + z**2 - (2.2 - 0.12 * y)**2
-    cone_limitado = np.maximum(cone, np.maximum(y - 7.0, -y))
-    
-    # Cruz no topo: Dois paralelogramos (blocos) em y = 8.0
-    # Bloco Vertical
-    bloco_v_x = np.abs(x) - 0.3
-    bloco_v_y = np.abs(y - 8.0) - 1.0
-    bloco_v_z = np.abs(z) - 0.3
-    cruz_v = np.maximum(bloco_v_x, np.maximum(bloco_v_y, bloco_v_z))
-    
-    # Bloco Horizontal
-    bloco_h_x = np.abs(x) - 0.8
-    bloco_h_y = np.abs(y - 8.0) - 0.3
-    bloco_h_z = np.abs(z) - 0.3
-    cruz_h = np.maximum(bloco_h_x, np.maximum(bloco_h_y, bloco_h_z))
-    
-    cruz = np.minimum(cruz_v, cruz_h)
-    
-    rei = np.minimum(cone_limitado, cruz)
-    return rei
+    # --- Cruz ---
+    cruz = uniao(
+        caixa(x, y, z, cx=0, cy=7.2, cz=0, hx=0.32, hy=1.1, hz=0.32),  # barra vertical
+        caixa(x, y, z, cx=0, cy=7.2, cz=0, hx=0.90, hy=0.32, hz=0.32),  # barra horizontal
+    )
+
+    # --- Corpo estilo vaso (mais robusto que a Rainha) ---
+    barriga      = elipsoide(x, y, z, cx=0, cy=2, cz=0, a=1.95, b=2.0)
+    afunilamento = cone_truncado(x, y, z, y_min=2.6, y_max=5.2, r_base=1.45, r_topo=0.60)
+    corpo        = uniao_suave(barriga, afunilamento, k=0.7)
+
+    return uniao(
+        cilindro(x, y, z, raio=2.5,  y_min=0.0, y_max=0.60),  # base
+        corpo,                                                    # barriga + afunilamento
+        cilindro(x, y, z, raio=0.60, y_min=4.8, y_max=5.65),  # pescoço fino
+        cilindro(x, y, z, raio=1.45, y_min=5.3, y_max=6.1),   # colar
+        cilindro(x, y, z, raio=0.40, y_min=6.0, y_max=6.35),  # haste até a cruz
+        cruz,
+    )
