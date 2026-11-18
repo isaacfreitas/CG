@@ -1,18 +1,18 @@
 # Pré-requisitos
 
-- Python 3.14 ou superior
-- Pip instalado e configurado
+- Python 3.10 ou superior
 
 # Instalação
 
-Instale as dependências:
+Crie um ambiente virtual e instale as dependências (numpy, matplotlib, scikit-image):
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
-# Execução
 
-Execute a aplicação com:
+# Execução
 
 ```bash
 python3 main.py

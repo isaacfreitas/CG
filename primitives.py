@@ -174,3 +174,19 @@ def toro(x, y, z, cx, cy, cz, r_maior, r_tubo):
     """
     d_anel = np.sqrt((x - cx)**2 + (z - cz)**2) - r_maior
     return d_anel**2 + (y - cy)**2 - r_tubo**2
+
+
+def cilindro_x(x, y, z, raio, x_min, x_max, cy=0.0, cz=0.0):
+    """
+    Cilindro deitado com eixo paralelo a X, passando por (cy, cz) no plano YZ,
+    entre x_min e x_max.
+
+    Mesma ideia do cilindro em Y, trocando o papel dos eixos:
+      radial:  (y-cy)² + (z-cz)² - r²
+      tampas:  x - x_max  e  -(x - x_min)
+    """
+    return intersecao(
+        (y - cy)**2 + (z - cz)**2 - raio**2,
+        x - x_max,
+        -(x - x_min)
+    )

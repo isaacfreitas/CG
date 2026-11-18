@@ -26,11 +26,10 @@ Z_BIAS        = 0.005                           # Tolerância do Z-buffer para e
 CENA = [
     # (função_de_campo, pos_x, pos_z, cor_hex, label, escala, limites_malha)
     (modeling.gerar_campo_peao,   -7.5, -4.5, "#E63946", "Peão",   1.0, None),
-    (modeling.gerar_campo_dama,   -4.5,  1.5, "#F4A261", "Dama",   1.0, (-4, 4)),
-    (modeling.gerar_campo_torre,  -1.5, -4.5, "#2A9D8F", "Torre",  1.0, None),
-    (modeling.gerar_campo_bispo,   1.5,  1.5, "#A8DADC", "Bispo",  1.0, None),
-    (modeling.gerar_campo_rainha,  4.5, -4.5, "#C77DFF", "Rainha", 1.0, None),
-    (modeling.gerar_campo_rei,     7.5,  1.5, "#FFD166", "Rei",    1.0, None),
+    (modeling.gerar_campo_lapis,  -4.5,  1.5, "#F4A261", "Lápis",  1.0, (-1.5, 8)),
+    (modeling.gerar_campo_altere, -1.5, -4.5, "#2A9D8F", "Altere", 1.0, (-3.5, 3.5)),
+    (modeling.gerar_campo_martelo, 1.5,  1.5, "#A8DADC", "Martelo", 1.0, (-2, 6)),
+    (modeling.gerar_campo_lixeira, 4.5, -4.5, "#C77DFF", "Lixeira", 1.0, (-2.5, 4.5)),
 ]
 
 
