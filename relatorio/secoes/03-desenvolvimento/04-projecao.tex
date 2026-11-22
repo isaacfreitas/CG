@@ -1,10 +1,38 @@
 % Etapa 4 do enunciado: projeção em perspectiva.
-% Fonte no código: math_3d.py (projecao_perspectiva, divisao_perspectiva), main.py
-% Dica: volume de visão (fov, aspecto, near, far), divisão por w, descarte dos polígonos
-% não visíveis, cor única por sólido (arestas e faces), objetos 3D e projeção 2D juntos.
-% Figuras: janela de projeção, em figuras/03-desenvolvimento/04-projecao/.
+% Fonte no código: math_3d.py (projecao_perspectiva, divisao_perspectiva), main.py (ndc_para_pixel)
+% Pendências de código: recorte pelo volume de visão, arestas na cor do sólido e figura com a
+% cena 3D e a janela de projeção juntas (item 4a).
 \subsection{Projeção em perspectiva}\label{sec:projecao}
 
-\confirmar{escrever: matriz de projeção, parâmetros do volume de visão e divisão perspectiva}
+Na projeção em perspectiva, objetos mais longe da câmera aparecem menores. O volume de visão é
+definido por quatro valores: o ângulo de abertura vertical (\textit{fov}), a proporção da janela
+(\textit{aspecto}) e as distâncias do plano próximo (\textit{near}) e do plano distante
+(\textit{far}). Neste trabalho, $fov = 58^\circ$, $aspecto = 1$, $near = 0{,}1$ e $far = 100$.
+Com $f = 1 / \tan(fov / 2)$, a matriz de projeção é
 
-\confirmar{escrever: tratamento dos polígonos fora do volume e cores por sólido}
+\begin{equation}
+  P = \begin{bmatrix}
+    f/aspecto & 0 & 0 & 0 \\
+    0 & f & 0 & 0 \\
+    0 & 0 & \dfrac{far + near}{near - far} & \dfrac{2 \cdot far \cdot near}{near - far} \\
+    0 & 0 & -1 & 0
+  \end{bmatrix}.
+\end{equation}
+
+Cada vértice, já no sistema da câmera, é multiplicado por $P$. O resultado é dividido pela
+coordenada $w$, que guarda a distância do ponto à câmera. Essa divisão dá as coordenadas
+normalizadas, entre $-1$ e $1$. Em seguida, elas são convertidas para pixels da janela de
+projeção de $res \times res$ pixels:
+
+\begin{equation}
+  x_{pixel} = \frac{x_{ndc} + 1}{2} \cdot res, \qquad
+  y_{pixel} = \frac{1 - y_{ndc}}{2} \cdot res .
+\end{equation}
+
+A projeção é feita triângulo por triângulo. Triângulos voltados para longe da câmera não são
+projetados (Seção~\ref{sec:rasterizacao}). Cada objeto tem uma cor própria, e as faces e as
+arestas dele usam essa mesma cor.
+
+\confirmar{descrever o recorte dos polígonos fora do volume de visão, depois de implementado}
+
+\confirmar{figura com os sólidos em 3D e a projeção na janela, depois de implementada (item 4a)}
