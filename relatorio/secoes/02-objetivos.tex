@@ -1,22 +1,20 @@
 % =====================================================================
 % 2. Objetivos
-% Dica: um objetivo geral e os específicos, seguindo os itens 1 a 6 do enunciado.
 % =====================================================================
 \section{Objetivos}\label{sec:objetivos}
 
 \subsection{Objetivo geral}\label{sec:obj-geral}
 
-\confirmar{escrever: objetivo geral em uma ou duas frases}
+Modelar cinco objetos do cotidiano e mostrá-los em uma cena 3D, passando por todas as etapas do
+pipeline gráfico, até a imagem final.
 
 \subsection{Objetivos específicos}\label{sec:obj-especificos}
 
-\confirmar{ajustar a lista abaixo ao que foi entregue}
-
 \begin{itemize}
-  \item modelar cinco objetos do cotidiano como malhas de triângulos com normais para fora;
-  \item compor uma cena no sistema de coordenadas do mundo, sem sobreposição e dentro do limite $|10|$;
+  \item modelar cinco objetos do cotidiano com malhas de triângulos e normais apontando para fora;
+  \item compor uma cena no sistema de coordenadas do mundo, sem sobreposição, com escala, rotação e translação, e valores de até $|10|$;
   \item transformar a cena para o sistema de coordenadas da câmera;
-  \item projetar a cena em perspectiva na janela de projeção;
-  \item calcular a iluminação (ambiente, difusa e especular) nos vértices visíveis;
-  \item rasterizar os polígonos em três resoluções, com interpolação baricêntrica.
+  \item projetar a cena em perspectiva na janela de projeção, sem os polígonos não visíveis;
+  \item calcular a iluminação com as componentes ambiente, difusa e especular;
+  \item rasterizar a cena em três resoluções, com cores por interpolação baricêntrica.
 \end{itemize}

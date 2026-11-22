@@ -15,8 +15,8 @@ computacionais, conclusão e referências (Obs1).
 
 ## Fase 1: Texto base
 
-- [ ] 1.1 Introdução
-- [ ] 1.2 Objetivos (geral e específicos)
+- [x] 1.1 Introdução
+- [x] 1.2 Objetivos (geral e específicos)
 
 ## Fase 2: Desenvolvimento (uma subseção por etapa do enunciado)
 
