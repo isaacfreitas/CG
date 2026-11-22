@@ -10,7 +10,7 @@ computacionais, conclusão e referências (Obs1).
 
 - [x] 0.1 Esqueleto LaTeX criado (main, preâmbulo, seções, figuras, referências)
 - [ ] 0.2 Compilar o esqueleto sem erro (`latexmk`)
-- [ ] 0.3 Capa: nomes dos 3 integrantes e título do trabalho
+- [x] 0.3 Capa: nomes dos 3 integrantes e título do trabalho
 - [ ] 0.4 Definir quem escreve cada seção
 
 ## Fase 1: Texto base
