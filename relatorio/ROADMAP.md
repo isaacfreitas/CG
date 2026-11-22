@@ -23,23 +23,23 @@ computacionais, conclusão e referências (Obs1).
 Depende do código: cada etapa só é escrita depois de a visualização correspondente existir
 em `main.py` (ver `DOCUMENTACAO.md`, seção 1).
 
-- [ ] 2.1 Modelagem dos 5 objetos (item 1): objetos, Marching Cubes, normais, função que retorna o sólido
-- [ ] 2.2 Composição da cena (item 2): matriz do mundo, limite $|10|$, sem interseção
-- [ ] 2.3 Sistema da câmera (item 3): base vetorial, transformação, origem do mundo, outros valores de eye
-- [ ] 2.4 Projeção em perspectiva (item 4): volume de visão, polígonos não visíveis, cor por sólido
-- [ ] 2.5 Iluminação (item 5): Phong, ambiente, difusa e especular
-- [ ] 2.6 Rasterização (item 6): culling, Bresenham, scan line par-ímpar, baricêntrica, Z-buffer
+- [x] 2.1 Modelagem dos 5 objetos (item 1): objetos, Marching Cubes, normais, função que retorna o sólido
+- [x] 2.2 Composição da cena (item 2): matriz do mundo, limite $|10|$, sem interseção
+- [x] 2.3 Sistema da câmera (item 3): base vetorial, transformação, origem do mundo, outros valores de eye
+- [x] 2.4 Projeção em perspectiva (item 4): volume de visão, polígonos não visíveis, cor por sólido
+- [x] 2.5 Iluminação (item 5): Phong, ambiente, difusa e especular
+- [x] 2.6 Rasterização (item 6): culling, Bresenham, scan line par-ímpar, baricêntrica, Z-buffer
 
 ## Fase 3: Simulações computacionais
 
-- [ ] 3.1 Gerar e salvar as imagens dos 5 objetos nos próprios sistemas
-- [ ] 3.2 Gerar cena no mundo e na câmera (pelo menos 2 valores de eye)
-- [ ] 3.3 Gerar projeção e rasterização em 3 resoluções (200, 400, 800 px)
-- [ ] 3.4 Descrever ambiente, parâmetros e tempo de execução
+- [x] 3.1 Gerar e salvar as imagens dos 5 objetos nos próprios sistemas
+- [x] 3.2 Gerar cena no mundo e na câmera (pelo menos 2 valores de eye)
+- [x] 3.3 Gerar projeção e rasterização em 3 resoluções (200, 400, 800 px)
+- [x] 3.4 Descrever ambiente, parâmetros e tempo de execução
 
 ## Fase 4: Fechamento
 
-- [ ] 4.1 Conclusão
+- [x] 4.1 Conclusão
 - [ ] 4.2 Referências: livro-texto (subseção 5.2.1) e conferir todas as citações
 - [ ] 4.3 Revisar o texto e resolver todos os `\confirmar{...}`
 - [ ] 4.4 Gerar o PDF final

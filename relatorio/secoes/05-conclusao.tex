@@ -1,10 +1,19 @@
 % =====================================================================
 % 5. Conclusão
-% Dica: sem informação nova e sem citação. Retomar o objetivo, o que foi alcançado,
-% limitações (ex.: renderização em Python puro é lenta) e trabalhos futuros.
+% Sem informação nova e sem citação.
 % =====================================================================
 \section{Conclusão}\label{sec:conclusao}
 
-\confirmar{escrever: o que foi alcançado em relação aos objetivos}
+Neste trabalho, o grupo fez todos os passos para desenhar uma cena 3D na tela. Foram criados cinco
+objetos do dia a dia, e cada um virou uma malha de triângulos. Depois, os objetos foram colocados
+juntos na cena, vistos por uma câmera, projetados em perspectiva, iluminados e pintados em três
+tamanhos de imagem.
 
-\confirmar{escrever: limitações e possíveis melhorias}
+Os resultados mostram o que cada passo faz. Mudar o \textit{eye} muda o ponto de vista. A luz dá a
+sensação de volume aos objetos. O Z-buffer faz o objeto da frente esconder o de trás. Quanto maior a
+imagem, mais lisos ficam os contornos.
+
+Ainda há o que melhorar. Os objetos não foram girados nem aumentados na cena, a lixeira aparece
+cortada na câmera principal e o \textit{eye} só muda no código. \confirmar{ajustar esta lista conforme o código final}
+Como próximos passos, o usuário poderia escolher o \textit{eye} sem mexer no código, e os polígonos
+fora do volume de visão poderiam ser cortados.
