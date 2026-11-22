@@ -5,7 +5,28 @@
 % =====================================================================
 \section{Desenvolvimento}\label{sec:desenvolvimento}
 
-\confirmar{escrever: visão geral do pipeline e da estrutura do código (um parágrafo, citar os módulos .py)}
+Esta seção explica cada passo do trabalho, na mesma ordem do enunciado: criar os objetos, montar
+a cena, colocar a câmera, projetar em perspectiva, calcular a luz e pintar a imagem. O código foi
+separado em arquivos, e cada arquivo cuida de uma parte, como mostra a
+Tabela~\ref{tab:arquivos}.
+
+\begin{table}[H]
+  \centering
+  \caption{Arquivos do código e suas funções}\label{tab:arquivos}
+  \begin{tabularx}{\textwidth}{lX}
+    \toprule
+    Arquivo & O que faz \\
+    \midrule
+    \texttt{primitives.py} & formas simples (cilindro, esfera, caixa, etc.) e como juntá-las \\
+    \texttt{modeling.py} & cria a malha de triângulos e define os cinco objetos \\
+    \texttt{math\_3d.py} & matrizes de translação, escala, rotação, câmera e projeção \\
+    \texttt{illumination.py} & cálculo da luz pelo modelo de Phong \\
+    \texttt{rasterizer.py} & desenho de retas, preenchimento dos triângulos e cores \\
+    \texttt{main.py} & monta a cena, roda todos os passos e mostra as imagens \\
+    \bottomrule
+  \end{tabularx}
+  \fonte{Os autores (2026).}
+\end{table}
 
 \input{secoes/03-desenvolvimento/01-modelagem}
 \input{secoes/03-desenvolvimento/02-cena}
