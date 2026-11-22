@@ -1,0 +1,23 @@
+% =====================================================================
+% Relatório do Trabalho de Computação Gráfica, 2ª etapa (2026.2)
+% Compilar: latexmk  (ou pelo Overleaf, com o compilador pdfLaTeX)
+% Cada seção fica em um arquivo separado dentro de secoes/
+% =====================================================================
+\documentclass[12pt,a4paper]{article}
+\input{config/preambulo}
+
+\begin{document}
+
+% Capa e sumário (sem número de seção)
+\input{secoes/00-capa}
+
+\input{secoes/01-introducao}
+\input{secoes/02-objetivos}
+\input{secoes/03-desenvolvimento}
+\input{secoes/04-simulacoes}
+\input{secoes/05-conclusao}
+
+% Referências: sem número de seção
+\printbibliography[heading=bibintoc,title={Referências}]
+
+\end{document}

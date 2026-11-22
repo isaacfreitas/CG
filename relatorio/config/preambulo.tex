@@ -1,0 +1,107 @@
+% =====================================================================
+% Preâmbulo: formatação do relatório (base ABNT, mesmo modelo do SAACI)
+% Não mexer aqui sem combinar com o grupo.
+% =====================================================================
+
+% --- Idioma e codificação ---
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[brazilian]{babel}
+\usepackage{csquotes}
+
+% --- Fonte: Times New Roman 12 ---
+\usepackage{mathptmx}
+\usepackage{microtype}
+
+% --- Página A4, margens: sup. e esq. 3 cm; inf. e dir. 2 cm ---
+\usepackage[a4paper,top=3cm,left=3cm,bottom=2cm,right=2cm,headsep=0.6cm,headheight=15pt]{geometry}
+
+% --- Espaçamento 1,5 e parágrafo com recuo de 1,25 cm, justificado ---
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{indentfirst}
+\setlength{\parindent}{1.25cm}
+\setlength{\parskip}{0pt}
+
+% --- Número de página no canto superior direito ---
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\fancypagestyle{plain}{\fancyhf{}\fancyhead[R]{\thepage}\renewcommand{\headrulewidth}{0pt}}
+
+% --- Títulos de seção: "1. Introdução", em negrito ---
+\usepackage{titlesec}
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\arabic{section}.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\arabic{section}.\arabic{subsection}.\arabic{subsubsection}}
+\titleformat{\section}{\normalfont\fontsize{13}{15}\bfseries}{\thesection.}{0.4em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\bfseries}{\thesubsubsection}{0.5em}{}
+\titlespacing*{\section}{0pt}{18pt}{6pt}
+\titlespacing*{\subsection}{0pt}{12pt}{4pt}
+\titlespacing*{\subsubsection}{0pt}{10pt}{4pt}
+
+% --- Figuras, tabelas e quadros: legenda ACIMA, fonte ABAIXO, tamanho 10 ---
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage[font={footnotesize,singlespacing},labelsep=endash,justification=centering,skip=4pt]{caption}
+\usepackage{subcaption}
+\captionsetup[figure]{name=Figura,position=above}
+\captionsetup[table]{name=Tabela,position=above}
+\captionsetup[sub]{labelformat=parens,labelsep=space,position=below}
+
+% Quadro (texto, bordas fechadas): ambiente próprio, numeração própria
+\usepackage{newfloat}
+\DeclareFloatingEnvironment[fileext=loq,name=Quadro,placement=H]{quadro}
+\captionsetup[quadro]{position=above}
+
+% \fonte{...}: linha "Fonte: ..." abaixo de figura, tabela ou quadro
+\newcommand{\fonte}[1]{\par\vspace{2pt}{\centering\footnotesize Fonte: #1\par}}
+
+% \figura{arquivo}{largura}{legenda}{rótulo}{fonte}
+\newcommand{\figura}[5]{%
+  \begin{figure}[H]
+    \centering
+    \caption{#3}\label{#4}
+    \includegraphics[width=#2]{#1}
+    \fonte{#5}
+  \end{figure}}
+
+% Caminho das imagens
+\graphicspath{{figuras/}}
+
+% --- Listas ---
+\usepackage{enumitem}
+\setlist{nosep,leftmargin=1.25cm}
+
+% --- Citação direta longa: recuo de 4 cm, fonte 10, espaço simples, sem aspas ---
+\newenvironment{citacao}{%
+  \par\vspace{6pt}\begin{list}{}{\setlength{\leftmargin}{4cm}\setlength{\rightmargin}{0pt}}
+  \item[]\footnotesize\singlespacing}{%
+  \end{list}\vspace{6pt}}
+
+% --- Referências ABNT (NBR 6023:2018) com biblatex-abnt ---
+\usepackage[style=abnt,backend=biber,justify=false,extrayear]{biblatex}
+\addbibresource{referencias.bib}
+% NBR 10520:2023: no texto, autor só com a inicial maiúscula -> (Martin, 2017).
+% Na lista de referências o SOBRENOME continua em CAIXA ALTA.
+\makeatletter
+\renewcommand*{\UpperOrSCCite}[1]{#1}
+\DeclareFieldFormat{uppercasecite}{#1}
+\makeatother
+\setlength\bibitemsep{\baselineskip}
+\renewcommand*{\bibfont}{\normalsize\singlespacing}
+
+% --- Links (sem caixas coloridas) ---
+\usepackage[hidelinks]{hyperref}
+\urlstyle{same}
+
+% --- Comando para marcar o que falta confirmar (aparece em vermelho) ---
+\usepackage{xcolor}
+\newcommand{\confirmar}[1]{\textcolor{red}{[CONFIRMAR: #1]}}
+% Para a versão final: descomente a linha abaixo para esconder as marcações
+% \renewcommand{\confirmar}[1]{}
