@@ -1,13 +1,35 @@
 % Etapa 6 do enunciado: rasterização.
-% Fonte no código: rasterizer.py, main.py
-% Dica: eliminação de faces ocultas (normal da face e eixo z da câmera), retas (livro-texto,
-% subseção 5.2.1), polígonos (par-ímpar com scan line), coordenadas baricêntricas, Z-buffer,
-% 3 resoluções.
-% Figuras: algoritmo em pseudocódigo ou diagrama, em figuras/03-desenvolvimento/06-rasterizacao/.
+% Fonte no código: rasterizer.py, main.py (renderizar_cena_completa)
+% Pendências de código: culling pelo eixo z da câmera (hoje usa a posição do eye no mundo) e
+% confirmar no livro-texto se a subseção 5.2.1 é o algoritmo de Bresenham.
 \subsection{Rasterização}\label{sec:rasterizacao}
 
-\confirmar{escrever: eliminação de faces ocultas pela normal e pelo eixo z da câmera}
+A rasterização transforma cada triângulo em pixels. Ela segue cinco passos, repetidos para todos os
+triângulos da cena.
 
-\confirmar{escrever: rasterização de retas e do preenchimento par-ímpar com scan line}
+\textbf{1. Eliminação de faces ocultas.} Para cada triângulo com vértices $v_0$, $v_1$ e $v_2$, calcula-se
+a normal $\vec{N}_f = (v_1 - v_0) \times (v_2 - v_0)$. Se a normal aponta para longe da câmera, ou
+seja, se $\vec{N}_f \cdot (eye - v_0) \le 0$, o triângulo é descartado. \confirmar{trocar pelo teste com o eixo $z$ da câmera, como o enunciado pede}
 
-\confirmar{escrever: interpolação baricêntrica da cor e uso do Z-buffer}
+\textbf{2. Retas.} As retas são desenhadas com o algoritmo de Bresenham, que usa só números inteiros.
+A cada passo, ele avança em $x$ ou em $y$ e usa uma variável de erro para decidir qual pixel fica mais
+perto da reta. Nesta cena, ele desenha a grade do chão e a caixa que marca os limites.
+
+\textbf{3. Preenchimento por scan line, com par-ímpar.} Para cada linha $y$ da imagem, calcula-se onde ela
+cruza as arestas do triângulo e ordenam-se os cruzamentos por $x$. Os pixels entre o primeiro e o
+segundo cruzamento ficam dentro do triângulo, e assim por diante, de par em par.
+
+\textbf{4. Interpolação baricêntrica.} Para um pixel $P$ dentro do triângulo $ABC$, as coordenadas baricêntricas
+são razões de áreas: $\alpha = \text{Área}(PBC)/\text{Área}(ABC)$, $\beta = \text{Área}(APC)/\text{Área}(ABC)$ e
+$\gamma = 1 - \alpha - \beta$. Com elas, a cor e a profundidade do pixel são uma média ponderada dos três
+valores dos vértices:
+
+\begin{equation}
+  cor_P = \alpha \, cor_A + \beta \, cor_B + \gamma \, cor_C .
+\end{equation}
+
+\textbf{5. Z-buffer.} Uma matriz guarda a profundidade do pixel mais próximo já pintado. Um pixel novo só
+é escrito se ficar mais perto da câmera. Assim, um objeto na frente esconde o que está atrás.
+
+A cena foi rasterizada em três resoluções: $200 \times 200$, $400 \times 400$ e $800 \times 800$
+pixels. Os resultados estão na Seção~\ref{sec:simulacoes}.
