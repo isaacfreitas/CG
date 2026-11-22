@@ -1,10 +1,26 @@
 % Etapa 5 do enunciado: iluminação.
-% Fonte no código: illumination.py
-% Dica: modelo de Phong \cite{phong1975}, componentes ambiente, difusa e especular,
-% coeficientes (ka, kd, ks, brilho), posição da luz, cálculo por vértice.
-% Figuras: opcional, comparação das componentes, em figuras/03-desenvolvimento/05-iluminacao/.
+% Fonte no código: illumination.py (calcular_iluminacao_phong), main.py (POSICAO_LUZ, coeficientes)
 \subsection{Iluminação}\label{sec:iluminacao}
 
-\confirmar{escrever: equação do modelo de Phong e valores usados}
+A cor de cada vértice visível é calculada com o modelo de Phong \cite{phong1975}, que soma três
+componentes: ambiente, difusa e especular. Com luz branca e cor do objeto $\vec{C}$, a cor final é
 
-\confirmar{escrever: como o RGB de cada vértice é calculado}
+\begin{equation}
+  \vec{I} = k_a \, \vec{C} + k_d \, (\vec{N} \cdot \vec{L}) \, \vec{C} + k_s \, (\vec{R} \cdot \vec{V})^{b} .
+\end{equation}
+
+Cada termo tem um papel:
+
+\begin{itemize}
+  \item \textbf{ambiente:} luz que chega de todos os lados, o que evita partes totalmente pretas;
+  \item \textbf{difusa:} depende do ângulo entre a normal $\vec{N}$ e a direção da luz $\vec{L}$. Quanto mais de frente para a luz, mais clara a face;
+  \item \textbf{especular:} o brilho. Depende do ângulo entre o reflexo da luz $\vec{R} = 2(\vec{N} \cdot \vec{L})\vec{N} - \vec{L}$ e a direção do observador $\vec{V}$, elevado ao expoente $b$.
+\end{itemize}
+
+Os vetores $\vec{N}$, $\vec{L}$ e $\vec{V}$ têm tamanho 1. Se $\vec{N} \cdot \vec{L}$ é negativo, a luz
+vem por trás da face, e as componentes difusa e especular valem zero. Foram usados
+$k_a = 0{,}5$, $k_d = 0{,}8$, $k_s = 0{,}4$ e $b = 32$, com a luz em $(5;\ 20;\ 15)$. O resultado é
+limitado ao intervalo $[0, 1]$ em cada canal RGB.
+
+O cálculo é feito só nos três vértices de cada triângulo visível. A cor dos pixels do meio do
+triângulo vem da interpolação dessas três cores (Seção~\ref{sec:rasterizacao}).
