@@ -1,11 +1,52 @@
 % Etapa 3 do enunciado: sistema de coordenadas da câmera.
-% Fonte no código: math_3d.py (look_at), main.py (EYE_PRINCIPAL, EYE_BLENDER)
-% Dica: eye, at, up, base (u, v, n), matriz de visualização, ponto da origem do mundo,
-% mais de um valor de eye gerando novas imagens.
-% Figuras: cena no sistema da câmera, em figuras/03-desenvolvimento/03-camera/.
+% Fonte no código: math_3d.py (look_at), main.py (EYE_PRINCIPAL, EYE_BLENDER, AT, UP)
+% Pendência de código: eye só muda editando o valor no main.py (item 3e).
 \subsection{Sistema de coordenadas da câmera}\label{sec:camera}
 
-\confirmar{escrever: cálculo da base vetorial a partir de eye, at e up}
+A câmera é definida por três pontos: a posição do observador (\textit{eye}), o ponto para onde ele
+olha (\textit{at}) e um vetor que indica o lado de cima (\textit{up}). Neste trabalho, \textit{at} é a
+origem do mundo e \textit{up} é $(0, 1, 0)$. A partir deles, calcula-se a base vetorial da câmera:
 
-\confirmar{escrever: transformação mundo para câmera e marcação da origem do mundo}
-\confirmar{escrever: exemplos com valores diferentes de eye}
+\begin{align}
+  \vec{n} &= \frac{eye - at}{\|eye - at\|}, \\
+  \vec{u} &= \frac{\vec{up} \times \vec{n}}{\|\vec{up} \times \vec{n}\|}, \\
+  \vec{v} &= \vec{n} \times \vec{u}.
+\end{align}
+
+O vetor $\vec{n}$ é o eixo $z$ da câmera e aponta do alvo para o observador. Os vetores $\vec{u}$ e
+$\vec{v}$ são os eixos $x$ e $y$. Com a base, monta-se a matriz de visualização, que leva um ponto do
+mundo para o sistema da câmera:
+
+\begin{equation}
+  V = \begin{bmatrix}
+    u_x & u_y & u_z & -\vec{u} \cdot eye \\
+    v_x & v_y & v_z & -\vec{v} \cdot eye \\
+    n_x & n_y & n_z & -\vec{n} \cdot eye \\
+    0 & 0 & 0 & 1
+  \end{bmatrix}.
+\end{equation}
+
+Para $eye = (7{,}5;\ 10;\ 5)$, a base é $\vec{u} = (0{,}555;\ 0;\ -0{,}832)$,
+$\vec{v} = (-0{,}618;\ 0{,}670;\ -0{,}412)$ e $\vec{n} = (0{,}557;\ 0{,}743;\ 0{,}371)$.
+
+A Figura~\ref{fig:camera} mostra a cena nesse sistema, com o ponto preto marcando a origem do
+mundo. Quando o valor de \textit{eye} muda, a base e a matriz são recalculadas e a imagem muda,
+como mostra o segundo exemplo, com $eye = (26;\ 18;\ 28)$.
+
+\begin{figure}[H]
+  \centering
+  \caption{Cena no sistema de coordenadas da câmera}\label{fig:camera}
+  \begin{subfigure}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{03-desenvolvimento/03-camera/eye1.png}
+    \caption{$eye = (7{,}5;\ 10;\ 5)$}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{03-desenvolvimento/03-camera/eye2.png}
+    \caption{$eye = (26;\ 18;\ 28)$}
+  \end{subfigure}
+  \fonte{Os autores (2026).}
+\end{figure}
+
+\confirmar{explicar como o usuário muda o valor de eye, depois de implementado no código (item 3e)}
