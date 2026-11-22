@@ -1,9 +1,22 @@
 % Etapa 2 do enunciado: cena no sistema de coordenadas do mundo.
-% Fonte no código: math_3d.py (translação, escala, rotações), main.py (CENA)
-% Dica: matriz do mundo M = T R S, valores da cena, limite |10|, ausência de interseção.
-% Figuras: cena 3D no mundo, em figuras/03-desenvolvimento/02-cena/.
+% Fonte no código: math_3d.py, main.py (CENA, construir_matriz_mundo)
+% Pendência de código: hoje todos os objetos têm escala 1 e rotação 0 (só existe rotação em y).
 \subsection{Composição da cena}\label{sec:cena}
 
-\confirmar{escrever: transformações aplicadas a cada objeto (escala, rotação, translação) e tabela de posições}
+Para colocar os objetos no sistema de coordenadas do mundo, cada vértice passa por escala,
+rotação e translação, nessa ordem. As três transformações são matrizes $4 \times 4$, e o produto
+delas é a matriz do mundo:
 
-\confirmar{escrever: como foi garantido o limite |10| e a ausência de sobreposição}
+\begin{equation}
+  M_{mundo} = T \cdot R \cdot S .
+\end{equation}
+
+Os objetos ficam espalhados no plano $xz$, com o chão em $y = -2$. As posições $(x, z)$ são:
+peão $(-7{,}5;\ -4{,}5)$, lápis $(-4{,}5;\ 1{,}5)$, haltere $(-1{,}5;\ -4{,}5)$, martelo
+$(1{,}5;\ 1{,}5)$ e lixeira $(4{,}5;\ -4{,}5)$. \confirmar{informar escala e rotação de cada objeto quando o código usar valores diferentes de 1 e $0^\circ$}
+
+O maior valor de uma componente depois das transformações foi $9{,}5$ (eixo $x$ do peão), dentro
+do limite $|10|$. A menor caixa que envolve cada objeto não cruza com nenhuma outra, então não há
+sobreposição. A Figura~\ref{fig:cena-mundo} mostra a cena, com os eixos e a origem do mundo.
+
+\figura{03-desenvolvimento/02-cena/cena-mundo.png}{0.65\textwidth}{Cena no sistema de coordenadas do mundo}{fig:cena-mundo}{Os autores (2026)}

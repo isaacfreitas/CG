@@ -1,101 +1,61 @@
 % Etapa 1 do enunciado: modelagem dos 5 objetos.
 % Fonte no código: primitives.py, modeling.py
-% Pendências de código (ver DOCUMENTACAO.md): função que retorna o sólido completo e plot de
-% cada objeto no seu sistema. Figuras em figuras/03-desenvolvimento/01-modelagem/.
+% Pendência de código: função que retorna o sólido completo (vértices, arestas, faces, normais, cor).
 \subsection{Modelagem dos objetos}\label{sec:modelagem}
 
-Foram escolhidos cinco objetos do cotidiano: lápis, peão de xadrez, haltere, martelo e lixeira.
-Cada um é modelado no seu próprio sistema de coordenadas, apoiado no plano $y = 0$ e centrado no
-eixo $y$. O haltere é a exceção: ele fica deitado ao longo do eixo $x$, centrado na origem.
+Foram modelados cinco objetos do cotidiano: lápis, peão de xadrez, haltere, martelo e lixeira. Cada
+objeto fica no seu próprio sistema de coordenadas, apoiado em $y = 0$ e centrado no eixo $y$. O
+haltere é o único deitado, ao longo do eixo $x$.
 
-\subsubsection{Descrição do objeto por uma função}
-
-Cada objeto é descrito por uma função $F(x, y, z)$. Ela recebe as coordenadas de um ponto do
-espaço e retorna um número que indica a posição desse ponto em relação ao objeto: se
-$F < 0$, o ponto está dentro; se $F = 0$, está na superfície; se $F > 0$, está fora. Por exemplo, a
-função de uma esfera de raio $r$ e centro $(c_x, c_y, c_z)$ é
+Cada objeto é descrito por uma função $F(x, y, z)$ que diz se um ponto está dentro ($F < 0$), na
+superfície ($F = 0$) ou fora ($F > 0$) dele. Por exemplo, para uma esfera de raio $r$ e centro
+$(c_x, c_y, c_z)$:
 
 \begin{equation}
   F(x, y, z) = (x - c_x)^2 + (y - c_y)^2 + (z - c_z)^2 - r^2 .
 \end{equation}
 
-Os objetos são construídos combinando formas simples: cilindro, cone truncado, esfera, caixa e
-toro. A combinação é feita por operações entre as funções de cada forma:
+Os objetos são montados juntando formas simples (cilindro, cone, esfera, caixa e toro). A união usa
+o mínimo entre as funções e a subtração usa $\max(A, -B)$, que serve para deixar a lixeira oca. No
+haltere, uma união suave arredonda o encontro da barra com as esferas.
 
-\begin{itemize}
-  \item \textbf{união:} o ponto está dentro se estiver em qualquer uma das formas. Calcula-se o mínimo entre as funções;
-  \item \textbf{interseção:} o ponto está dentro se estiver em todas as formas ao mesmo tempo. Calcula-se o máximo;
-  \item \textbf{subtração:} retira uma forma de outra, o que serve para fazer um furo ou uma parte oca. Calcula-se $\max(A, -B)$;
-  \item \textbf{união suave:} é uma união que arredonda o encontro entre duas formas, no lugar de deixar uma quina. É usada na junção da barra com as esferas do haltere.
-\end{itemize}
-
-A Tabela~\ref{tab:objetos} mostra as formas e a operação de cada objeto. Na lixeira, um cone menor
-é retirado de dentro de um cone maior para deixar a parte oca, e o toro forma a borda.
-
-\begin{table}[H]
-  \centering
-  \caption{Formas e operação usadas em cada objeto}\label{tab:objetos}
-  \begin{tabularx}{\textwidth}{lXl}
-    \toprule
-    Objeto & Formas & Operação \\
-    \midrule
-    Lápis & cilindro (corpo), cilindro (anel) e cone (ponta) & união \\
-    Peão & cilindro (base), cone truncado (corpo), cilindro (anel) e esfera (cabeça) & união \\
-    Haltere & duas esferas e um cilindro deitado (barra) & união suave \\
-    Martelo & cilindro (cabo) e caixa (cabeça) & união \\
-    Lixeira & dois cones truncados (casca e oco) e toro (borda) & subtração e união \\
-    \bottomrule
-  \end{tabularx}
-  \fonte{Os autores (2026).}
-\end{table}
-
-\subsubsection{Malha de triângulos}
-
-A função $F$ descreve o objeto, mas o computador precisa de triângulos para desenhá-lo. Para
-isso, a função é calculada em uma grade 3D com 80 pontos por eixo, e a grade é entregue ao
+Para obter os triângulos, a função é calculada em uma grade 3D com 80 pontos por eixo e entregue ao
 algoritmo \textit{Marching Cubes} \cite{lorensen1987}, da biblioteca scikit-image
-\cite{vanderwalt2014}. Em cada cubo da grade que a superfície atravessa, o algoritmo cria
-triângulos sobre o ponto em que $F = 0$. Juntos, eles formam a superfície do objeto. Uma grade
-maior gera mais triângulos e mais detalhe, mas demora mais.
-
-O algoritmo devolve os vértices, as faces (triângulos, guardados como três índices de vértices) e
-uma normal para cada vértice. Essas normais saem apontando para dentro, então o código troca o
-sinal para que apontem para fora. A normal de cada face é calculada pelo produto vetorial de dois
-lados do triângulo, $(v_1 - v_0) \times (v_2 - v_0)$, e também aponta para fora do sólido.
+\cite{vanderwalt2014}. Ele devolve os vértices, as faces (três índices de vértices cada) e uma
+normal por vértice. Essas normais saem apontando para dentro, então o código troca o sinal para que
+apontem para fora. A normal de cada face é o produto vetorial $(v_1 - v_0) \times (v_2 - v_0)$.
 
 \confirmar{explicar a função que retorna o sólido (vértices, arestas, faces, normais e cor), depois de criada no código}
 
-A Figura~\ref{fig:objetos} mostra os cinco objetos, cada um no seu sistema de coordenadas. Os eixos
-$x$, $y$ e $z$ saem da origem do objeto, e as setas pretas são as normais de algumas das faces.
+A Figura~\ref{fig:objetos} mostra os objetos, cada um no seu sistema, com os eixos e as normais de
+algumas faces (setas pretas).
 
 \begin{figure}[H]
   \centering
   \caption{Objetos no sistema de coordenadas do objeto}\label{fig:objetos}
-  \begin{subfigure}{0.48\textwidth}
+  \begin{subfigure}{0.31\textwidth}
     \centering
     \includegraphics[width=\textwidth]{03-desenvolvimento/01-modelagem/lapis.png}
     \caption{Lápis}
   \end{subfigure}\hfill
-  \begin{subfigure}{0.48\textwidth}
+  \begin{subfigure}{0.31\textwidth}
     \centering
     \includegraphics[width=\textwidth]{03-desenvolvimento/01-modelagem/peao.png}
     \caption{Peão}
-  \end{subfigure}
-
-  \vspace{6pt}
-  \begin{subfigure}{0.48\textwidth}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.31\textwidth}
     \centering
     \includegraphics[width=\textwidth]{03-desenvolvimento/01-modelagem/haltere.png}
     \caption{Haltere}
-  \end{subfigure}\hfill
-  \begin{subfigure}{0.48\textwidth}
-    \centering
-    \includegraphics[width=\textwidth]{03-desenvolvimento/01-modelagem/martelo.png}
-    \caption{Martelo}
   \end{subfigure}
 
   \vspace{6pt}
-  \begin{subfigure}{0.48\textwidth}
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{03-desenvolvimento/01-modelagem/martelo.png}
+    \caption{Martelo}
+  \end{subfigure}\hspace{0.04\textwidth}
+  \begin{subfigure}{0.31\textwidth}
     \centering
     \includegraphics[width=\textwidth]{03-desenvolvimento/01-modelagem/lixeira.png}
     \caption{Lixeira}
