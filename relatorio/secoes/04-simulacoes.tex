@@ -1,22 +1,50 @@
 % =====================================================================
 % 4. Simulações computacionais
-% Dica: resultados de cada etapa com figuras reais geradas pelo código, 3 resoluções
-% (200, 400 e 800 px), pelo menos duas posições de eye, tempo de execução.
-% Imagens em figuras/04-simulacoes/. Modelo de figura:
-%   \figura{04-simulacoes/exemplo.png}{0.8\textwidth}{Legenda}{fig:exemplo}{Os autores (2026)}
+% Imagens geradas com o código do projeto (script descartável chamando renderizar_cena_completa).
+% Tempos medidos em macOS, Python 3.14, numpy 2.5.5, matplotlib 3.11.2, scikit-image 0.26.0.
+% Pendência: refazer as imagens e os tempos se o código do pipeline mudar.
 % =====================================================================
 \section{Simulações computacionais}\label{sec:simulacoes}
 
-\confirmar{escrever: ambiente de execução (versão do Python e bibliotecas) e parâmetros usados}
+As simulações foram feitas em Python 3.14, com NumPy, Matplotlib e scikit-image. A malha de cada
+objeto foi gerada com 80 pontos por eixo. A câmera principal usa $eye = (7{,}5;\ 10;\ 5)$,
+$at = (0, 0, 0)$ e $up = (0, 1, 0)$, e a luz fica em $(5;\ 20;\ 15)$.
 
-\subsection{Objetos no sistema de coordenadas próprio}\label{sec:sim-objetos}
+\subsection{Três resoluções}\label{sec:sim-resolucoes}
 
-\confirmar{figuras dos 5 objetos}
+A Figura~\ref{fig:resolucoes} mostra a mesma cena rasterizada em $200 \times 200$, $400 \times 400$
+e $800 \times 800$ pixels. Com mais pixels, os contornos ficam mais lisos e o brilho especular
+aparece com mais detalhe. Em $200 \times 200$ já dá para reconhecer os objetos, mas as bordas
+ficam serrilhadas. O tempo de rasterização foi de 1,4 s, 1,5 s e 2,0 s, respectivamente, sem contar
+a geração das malhas.
 
-\subsection{Cena no mundo e na câmera}\label{sec:sim-cena}
+\begin{figure}[H]
+  \centering
+  \caption{Cena rasterizada em três resoluções}\label{fig:resolucoes}
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{04-simulacoes/eye1-200.png}
+    \caption{$200 \times 200$}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{04-simulacoes/eye1-400.png}
+    \caption{$400 \times 400$}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.31\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{04-simulacoes/eye1-800.png}
+    \caption{$800 \times 800$}
+  \end{subfigure}
+  \fonte{Os autores (2026).}
+\end{figure}
 
-\confirmar{figuras da cena no mundo e na câmera, com pelo menos dois valores de eye}
+\subsection{Mudança do eye}\label{sec:sim-eye}
 
-\subsection{Projeção e rasterização em três resoluções}\label{sec:sim-raster}
+Ao trocar o \textit{eye} para $(26;\ 18;\ 28)$, a base da câmera e a matriz de visualização são
+recalculadas e a imagem muda. Nessa posição, a câmera fica mais longe e mostra todos os objetos
+dentro da caixa que marca o limite de $|10|$ (Figura~\ref{fig:eye2}).
 
-\confirmar{figuras em 200, 400 e 800 px e comparação}
+\figura{04-simulacoes/eye2-400.png}{0.45\textwidth}{Cena vista de $eye = (26;\ 18;\ 28)$, em $400 \times 400$}{fig:eye2}{Os autores (2026)}
+
+\confirmar{comentar a lixeira cortada na borda direita da câmera principal, ou ajustar o eye}
