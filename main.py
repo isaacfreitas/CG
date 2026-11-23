@@ -95,6 +95,28 @@ def desenhar_reta_3d_no_zbuffer(p1_mundo, p2_mundo, cor, imagem, z_buffer, view_
                 imagem[py, px]   = np.array(cor, dtype=np.uint8)
 
 
+def desenhar_aresta(p1, p2, z1, z2, cor1, cor2, imagem, z_buffer):
+    """
+    Desenha a aresta de uma face com Bresenham, já em coordenadas de pixel. A cor e a
+    profundidade variam linearmente entre os extremos, então a aresta tem a cor iluminada
+    do próprio sólido. Usa o Z-buffer sem folga: só preenche o que ainda não está coberto.
+    """
+    res = imagem.shape[0]
+    # Sem recorte de retas: ignora aresta com extremo muito fora da tela (evita laços enormes)
+    if any(abs(c) > 2 * res for c in (*p1, *p2)):
+        return
+
+    pontos = rasterizer.rasterizar_bresenham(p1[0], p1[1], p2[0], p2[1])
+    for idx, (px, py) in enumerate(pontos):
+        if 0 <= px < res and 0 <= py < res:
+            t = idx / max(len(pontos) - 1, 1)
+            z = (1 - t) * z1 + t * z2
+            if z < z_buffer[py, px]:
+                z_buffer[py, px] = z
+                cor = (1 - t) * cor1 + t * cor2
+                imagem[py, px] = (np.clip(cor, 0.0, 1.0) * 255).astype(np.uint8)
+
+
 def desenhar_origem_mundo(imagem, z_buffer, view_matrix, proj_matrix, res):
     """Marca a origem do mundo (0, 0, 0) com uma pequena cruz laranja (item 3d)."""
     COR_ORIGEM = [255, 110, 30]
@@ -156,6 +178,7 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
       5. Scan-line par-ímpar → pixels internos do triângulo
       6. Interpolação baricêntrica de cor e profundidade Z
       7. Z-buffer → escreve o pixel mais próximo
+      8. Arestas da face com Bresenham, na cor iluminada dos vértices
     """
     imagem   = np.full((resolucao_tela, resolucao_tela, 3), 245, dtype=np.uint8)
     z_buffer = np.full((resolucao_tela, resolucao_tela), np.inf)
@@ -230,6 +253,14 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
                                      + beta  * cores_vertices[1]
                                      + gamma * cores_vertices[2])
                         imagem[y, x] = (np.clip(cor_pixel, 0.0, 1.0) * 255).astype(np.uint8)
+
+            # Estágio 8: arestas da face com Bresenham, na cor iluminada dos vértices.
+            # Fecham as frestas que o scan-line deixa nas bordas dos triângulos.
+            c0, c1, c2 = cores_vertices
+            for p1, p2, z1, z2, cor1, cor2 in [(pA, pB, zA, zB, c0, c1),
+                                               (pB, pC, zB, zC, c1, c2),
+                                               (pC, pA, zC, zA, c2, c0)]:
+                desenhar_aresta(p1, p2, z1, z2, cor1, cor2, imagem, z_buffer)
 
     desenhar_origem_mundo(imagem, z_buffer, view_matrix, proj_matrix, resolucao_tela)
 
