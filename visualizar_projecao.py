@@ -62,10 +62,9 @@ def desenhar_projecao(eye, ax, ax_janela):
         for face in solido["faces"]:
             a, b, c = vertices[face]
             # Mesmas exclusões do pipeline: fora do volume de visão ou de costas para a câmera
-            # (que está na origem, então o vetor até ela é -a).
             if not math_3d.face_no_volume_de_visao(*clip[face]):
                 continue
-            if np.dot(np.cross(b - a, c - a), -a) <= 0:
+            if not math_3d.face_voltada_para_camera(np.cross(b - a, c - a), a):
                 continue
             visiveis.append((vertices[face][:, 2].mean(), ndc[face, :2] * meia_janela))
 

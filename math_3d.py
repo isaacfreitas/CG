@@ -181,3 +181,15 @@ def face_no_volume_de_visao(clip_a, clip_b, clip_c):
         if np.all(coordenada < -w) or np.all(coordenada > w):
             return False
     return not np.all(z > w)
+
+
+def face_voltada_para_camera(normal_camera, vertice_camera):
+    """
+    Back-face culling em coordenadas de câmera: diz se a face está voltada para o observador.
+    O observador está na origem, então o vetor da face até ele é -vertice_camera, e a face
+    é visível quando a normal (que aponta para fora do sólido) faz ângulo agudo com esse vetor.
+    Em perspectiva a direção de visada muda de face para face; só no centro da imagem ela
+    coincide com o eixo z da câmera. Testar apenas o sinal de normal_camera[2] descartaria,
+    perto das bordas, faces quase de lado que ainda são visíveis.
+    """
+    return np.dot(normal_camera, -vertice_camera) > 0

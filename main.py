@@ -173,7 +173,7 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
     Estágios por face:
       1. Transformação dos vértices/normais para o espaço do mundo
       2. Recorte pelo volume de visão (near, far e laterais)
-      3. Back-face culling
+      3. Back-face culling (normal da face e vetor até o observador, em coordenadas de câmera)
       4. Iluminação de Phong nos 3 vértices
       5. Scan-line par-ímpar → pixels internos do triângulo
       6. Interpolação baricêntrica de cor e profundidade Z
@@ -195,27 +195,33 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
         vertices_mundo = obj["vertices_mundo"]
         normais_mundo  = solido["normais_vertices"] @ math_3d.matriz_normal(obj["matriz"]).T
 
+        # Normais das faces no sistema da câmera, para o culling. A view é só rotação e
+        # translação, então a parte 3x3 dela leva as normais (sem translação).
+        normais_faces_camera = (solido["normais_faces"] @ math_3d.matriz_normal(obj["matriz"]).T
+                                @ view_matrix[:3, :3].T)
+
+        vertices_camera = []
         vertices_clip   = []
         vertices_tela   = []
         profundidades_z = []
         for v in vertices_mundo:
             v_mundo = np.append(v, 1.0)
-            v_clip = proj_matrix @ (view_matrix @ v_mundo)
+            v_camera = view_matrix @ v_mundo
+            v_clip = proj_matrix @ v_camera
             v_ndc = math_3d.divisao_perspectiva(v_clip)
+            vertices_camera.append(v_camera[:3])
             vertices_clip.append(v_clip)
             profundidades_z.append(v_ndc[2])
             vertices_tela.append(ndc_para_pixel(v_ndc, resolucao_tela))
 
-        for face in faces:
+        for i_face, face in enumerate(faces):
             # Estágio 2: Recorte — descarta faces atrás do near ou fora do volume de visão
             if not math_3d.face_no_volume_de_visao(*(vertices_clip[i] for i in face)):
                 continue
 
-            v0, v1, v2 = vertices_mundo[face[0]], vertices_mundo[face[1]], vertices_mundo[face[2]]
-
-            # Estágio 3: Back-face culling — descarta faces voltadas para longe da câmera
-            normal_face = np.cross(v1 - v0, v2 - v0)
-            if np.dot(normal_face, posicao_camera - v0) <= 0:
+            # Estágio 3: Back-face culling — normal da face e vetor até o observador (câmera)
+            if not math_3d.face_voltada_para_camera(normais_faces_camera[i_face],
+                                                    vertices_camera[face[0]]):
                 continue
 
             # Estágio 4: Phong nos 3 vértices (Gouraud shading)
