@@ -174,14 +174,25 @@ def face_no_volume_de_visao(clip_a, clip_b, clip_c):
       2. Os 3 vértices estão fora do mesmo plano (esquerda, direita, baixo, cima ou far).
          Se estivessem em planos diferentes, o triângulo ainda poderia cruzar a tela.
     """
-    x, y, z, w = np.array([clip_a, clip_b, clip_c]).T
+    vertices = (clip_a, clip_b, clip_c)
 
-    if np.any(z < -w):
-        return False
-    for coordenada in (x, y):
-        if np.all(coordenada < -w) or np.all(coordenada > w):
+    # Plano near: um único vértice atrás dele já descarta o triângulo
+    for x, y, z, w in vertices:
+        if z < -w:
             return False
-    return not np.all(z > w)
+
+    # Para cada um dos outros 5 planos, descarta se os 3 vértices estão do lado de fora
+    if all(x < -w for x, y, z, w in vertices):   # esquerda
+        return False
+    if all(x > w for x, y, z, w in vertices):    # direita
+        return False
+    if all(y < -w for x, y, z, w in vertices):   # baixo
+        return False
+    if all(y > w for x, y, z, w in vertices):    # cima
+        return False
+    if all(z > w for x, y, z, w in vertices):    # far
+        return False
+    return True
 
 
 def face_voltada_para_camera(normal_camera, vertice_camera):

@@ -126,21 +126,6 @@ def esfera(x, y, z, cx, cy, cz, raio):
     return (x - cx)**2 + (y - cy)**2 + (z - cz)**2 - raio**2
 
 
-def elipsoide(x, y, z, cx, cy, cz, a, b):
-    """
-    Elipsoide com simetria rotacional em torno do eixo Y.
-    a = raio horizontal (X e Z), b = semialtura (Y).
-
-    Generaliza a esfera dividindo cada eixo pelo seu próprio raio:
-        (x-cx)²/a²  +  (y-cy)²/b²  +  (z-cz)²/a²  -  1  =  0
-
-    a > b  →  oblato  (disco achatado, como a Terra)
-    b > a  →  prolato (forma de ovo ou limão)
-    a = b  →  esfera  (caso degenerado)
-    """
-    return (x - cx)**2 / a**2 + (y - cy)**2 / b**2 + (z - cz)**2 / a**2 - 1.0
-
-
 def caixa(x, y, z, cx, cy, cz, hx, hy, hz):
     """
     Caixa (paralelepípedo) centrada em (cx, cy, cz) com meias-dimensões hx, hy, hz.

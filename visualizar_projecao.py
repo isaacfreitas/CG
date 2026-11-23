@@ -22,7 +22,7 @@ from matplotlib.collections import PolyCollection
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 import math_3d
-from main import EYE_PRINCIPAL, AT, FOV_PRINCIPAL, Z_NEAR, Z_FAR
+from cena import EYE_PRINCIPAL, AT, FOV_PRINCIPAL, Z_NEAR, Z_FAR
 from visualizar_camera import desenhar_cena_na_camera
 from visualizar_objetos import para_plot
 

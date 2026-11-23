@@ -22,10 +22,9 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
-import cena
 import math_3d
-import modeling
-from main import EYE_PRINCIPAL, AT, UP
+from cena import EYE_PRINCIPAL, AT, UP
+import cena
 from visualizar_objetos import para_plot
 
 RESOLUCAO = 50          # grade do Marching Cubes (menor que a da cena, para o plot ficar leve)
@@ -57,8 +56,7 @@ def desenhar_cena_na_camera(eye, ax):
     objetos_na_camera = []
 
     # 3b e 3c: vértices do mundo -> câmera (cena.montar_cena já leva objeto -> mundo)
-    solidos = {item["nome"]: modeling.obter_solido(item["nome"], RESOLUCAO) for item in cena.CENA}
-    for obj in cena.montar_cena(solidos):
+    for obj in cena.montar_cena(cena.criar_solidos(RESOLUCAO)):
         solido = obj["solido"]
         vertices = math_3d.aplicar_transformacao(view, obj["vertices_mundo"])
         todos_os_pontos.append(vertices)

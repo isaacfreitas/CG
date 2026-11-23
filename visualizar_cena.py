@@ -19,7 +19,6 @@ from matplotlib.ticker import FuncFormatter
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 import cena
-import modeling
 from visualizar_objetos import para_plot
 
 RESOLUCAO = 50   # grade do Marching Cubes (baixa, só para o plot ficar leve)
@@ -75,9 +74,7 @@ def mostrar_cena(objetos_cena, ax):
 
 
 def main():
-    solidos = {item["nome"]: modeling.obter_solido(item["nome"], RESOLUCAO)
-               for item in cena.CENA}
-    objetos_cena = cena.montar_cena(solidos)
+    objetos_cena = cena.montar_cena(cena.criar_solidos(RESOLUCAO))
     cena.imprimir_resumo(objetos_cena)
 
     fig = plt.figure(figsize=(8, 8))

@@ -1,14 +1,14 @@
 import numpy as np
 from skimage.measure import marching_cubes
 from primitives import (
-    cilindro, cilindro_x, cone_truncado, esfera, elipsoide, caixa, toro,
-    uniao, intersecao, subtracao, uniao_suave
+    cilindro, cilindro_x, cone_truncado, esfera, caixa, toro,
+    uniao, subtracao, uniao_suave
 )
 
 
 def extrair_malha(funcao_campo, limites=(-5, 12), resolucao=100):
     """
-    Gera a grelha 3D e extrai vértices, faces e normais usando Marching Cubes.
+    Gera a grelha 3D e extrai vértices e faces usando Marching Cubes.
     """
     x, y, z = np.mgrid[
         limites[0]:limites[1]:complex(0, resolucao),
@@ -16,10 +16,10 @@ def extrair_malha(funcao_campo, limites=(-5, 12), resolucao=100):
         limites[0]:limites[1]:complex(0, resolucao)
     ]
     volume = funcao_campo(x, y, z)
-    vertices, faces, normals, values = marching_cubes(volume, level=0.0)
+    vertices, faces, _, _ = marching_cubes(volume, level=0.0)
     passo = (limites[1] - limites[0]) / (resolucao - 1)
     vertices = (vertices * passo) + limites[0]
-    return vertices, faces, normals
+    return vertices, faces
 
 
 # ==============================================================================
@@ -41,7 +41,7 @@ def criar_solido(funcao_campo, nome, cor, limites=(-5, 12), resolucao=80):
 
     Tudo está no sistema de coordenadas do objeto.
     """
-    vertices, faces, _ = extrair_malha(funcao_campo, limites, resolucao)
+    vertices, faces = extrair_malha(funcao_campo, limites, resolucao)
     faces = faces.astype(np.int64)
 
     # Normal de cada face: produto vetorial de duas arestas do triângulo, com tamanho 1.
@@ -59,9 +59,13 @@ def criar_solido(funcao_campo, nome, cor, limites=(-5, 12), resolucao=80):
     normais_v /= np.linalg.norm(normais_v, axis=1, keepdims=True) + 1e-12
 
     # Arestas: cada triângulo tem 3 (v0-v1, v1-v2, v2-v0). Uma aresta é compartilhada
-    # por 2 triângulos, então ordenamos cada par e removemos as repetidas.
-    todas = np.vstack([faces[:, [0, 1]], faces[:, [1, 2]], faces[:, [2, 0]]])
-    arestas = np.unique(np.sort(todas, axis=1), axis=0)
+    # por 2 triângulos, então guardamos cada par em ordem (menor, maior) num conjunto,
+    # que descarta as repetidas.
+    conjunto = set()
+    for v0, v1, v2 in faces:
+        for a_idx, b_idx in ((v0, v1), (v1, v2), (v2, v0)):
+            conjunto.add((min(a_idx, b_idx), max(a_idx, b_idx)))
+    arestas = np.array(sorted(conjunto))
 
     return {
         "nome": nome,

@@ -9,7 +9,7 @@ def normalizar(v):
 
 
 def calcular_iluminacao_phong(vertice_mundo, normal, posicao_luz, posicao_camera,
-                              cor_objeto, coeficientes=(0.2, 0.7, 0.5), brilho=32):
+                              cor_objeto, coeficientes=(0.5, 0.8, 0.4), brilho=32):
     """
     Cálculo vetorial minucioso do Modelo de Phong.
     coeficientes: (ka, kd, ks) correspondentes a ambiente, difusa e especular.

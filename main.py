@@ -2,31 +2,21 @@ import argparse
 
 import numpy as np
 import matplotlib.pyplot as plt
-import modeling
 import illumination
 import math_3d
 import rasterizer
 import cena
+from cena import (EYE_PRINCIPAL, EYE_BLENDER, AT, UP, FOV_PRINCIPAL,
+                  Z_NEAR, Z_FAR, POSICAO_LUZ)
 
 # ==============================================================================
 # CONFIGURAÇÃO GLOBAL — ajuste aqui para testes rápidos
 # ==============================================================================
 RESOLUCAO_MARCHING_CUBES = 80               # Qualidade da malha: maior = mais detalhe, mais lento
 RESOLUCOES_TELA          = [200, 400, 800]  # Resoluções comparadas na Tela 1
+Z_BIAS                   = 0.005            # Tolerância do Z-buffer para evitar z-fighting
 
-EYE_PRINCIPAL = np.array([9.75, 13.0,  6.5])   # Câmera da Tela 1 (visão frontal)
-EYE_BLENDER   = np.array([26.0, 18.0, 28.0])   # Câmera da Tela 2 (visão oblíqua)
-AT            = np.array([0.0,   0.0,  0.0])   # Ponto para onde as câmeras apontam
-UP            = np.array([0.0,   1.0,  0.0])   # Vetor "cima" do mundo
-
-FOV_PRINCIPAL = 58       # Abertura vertical (graus) da câmera da Tela 1
-Z_NEAR        = 0.1      # Plano próximo do volume de visão
-Z_FAR         = 100.0    # Plano distante do volume de visão
-
-POSICAO_LUZ   = np.array([5.0, 20.0, 15.0])    # Posição da fonte de luz no espaço do mundo
-Z_BIAS        = 0.005                           # Tolerância do Z-buffer para evitar z-fighting
-
-# A cena (posição, rotação e escala de cada objeto) fica em cena.py.
+# A cena, as câmeras e a luz ficam em cena.py.
 
 
 # ==============================================================================
@@ -39,10 +29,15 @@ def ndc_para_pixel(ndc, res):
     return x, y
 
 
+def projetar(p_mundo, view_matrix, proj_matrix):
+    """Leva um ponto do mundo até o NDC: câmera (view), projeção e divisão por w."""
+    v_camera = view_matrix @ np.append(p_mundo, 1.0)
+    return math_3d.divisao_perspectiva(proj_matrix @ v_camera)
+
+
 def calcular_posicao_tela_rotulo(p_mundo, view_matrix, proj_matrix, res):
     """Projeta um ponto 3D do mundo para pixel 2D (usado nos ticks do grid)."""
-    v_cam = view_matrix @ np.array([p_mundo[0], p_mundo[1], p_mundo[2], 1.0])
-    v_ndc = math_3d.divisao_perspectiva(proj_matrix @ v_cam)
+    v_ndc = projetar(p_mundo, view_matrix, proj_matrix)
     if abs(v_ndc[0]) > 1.0 or abs(v_ndc[1]) > 1.0:
         return None
     return ndc_para_pixel(v_ndc, res)
@@ -68,18 +63,14 @@ def desenhar_ticks(ax, view_matrix, proj_matrix, res):
 
 def desenhar_reta_3d_no_zbuffer(p1_mundo, p2_mundo, cor, imagem, z_buffer, view_matrix, proj_matrix, res):
     """Projeta e rasteriza uma linha 3D no Z-buffer via Bresenham."""
-    def projetar(p):
-        v_cam = view_matrix @ np.array([p[0], p[1], p[2], 1.0])
-        return math_3d.divisao_perspectiva(proj_matrix @ v_cam)
-
-    v1_ndc = projetar(p1_mundo)
-    v2_ndc = projetar(p2_mundo)
+    v1_ndc = projetar(p1_mundo, view_matrix, proj_matrix)
+    v2_ndc = projetar(p2_mundo, view_matrix, proj_matrix)
 
     if abs(v1_ndc[0]) > 1.8 or abs(v1_ndc[1]) > 1.8 or abs(v2_ndc[0]) > 1.8 or abs(v2_ndc[1]) > 1.8:
         return
 
-    x1, y1 = int(ndc_para_pixel(v1_ndc, res)[0]), int(ndc_para_pixel(v1_ndc, res)[1])
-    x2, y2 = int(ndc_para_pixel(v2_ndc, res)[0]), int(ndc_para_pixel(v2_ndc, res)[1])
+    x1, y1 = (int(c) for c in ndc_para_pixel(v1_ndc, res))
+    x2, y2 = (int(c) for c in ndc_para_pixel(v2_ndc, res))
 
     pontos = rasterizer.rasterizar_bresenham(x1, y1, x2, y2)
     n_pts  = len(pontos)
@@ -193,13 +184,18 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
 
         # Estágio 1: vértices e normais no espaço do mundo (matriz M = T·Rz·Ry·Rx·S de cena.py).
         # Normais usam a inversa transposta de M, que as mantém perpendiculares à superfície.
+        # Cada linha abaixo aplica n' = N·n a todas as normais de uma vez (N = matriz_normal).
         vertices_mundo = obj["vertices_mundo"]
-        normais_mundo  = solido["normais_vertices"] @ math_3d.matriz_normal(obj["matriz"]).T
+        N = math_3d.matriz_normal(obj["matriz"])
+        normais_mundo = solido["normais_vertices"] @ N.T
 
         # Normais das faces no sistema da câmera, para o culling. A view é só rotação e
         # translação, então a parte 3x3 dela leva as normais (sem translação).
-        normais_faces_camera = (solido["normais_faces"] @ math_3d.matriz_normal(obj["matriz"]).T
-                                @ view_matrix[:3, :3].T)
+        normais_faces_mundo  = solido["normais_faces"] @ N.T
+        normais_faces_camera = normais_faces_mundo @ view_matrix[:3, :3].T
+
+        # Cor de Phong de cada vértice, calculada só quando uma face visível precisa dela
+        cores = {}
 
         vertices_camera = []
         vertices_clip   = []
@@ -225,19 +221,18 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
                                                     vertices_camera[face[0]]):
                 continue
 
-            # Estágio 4: Phong nos 3 vértices (Gouraud shading)
-            cores_vertices = [
-                illumination.calcular_iluminacao_phong(
-                    vertice_mundo=vertices_mundo[v_idx],
-                    normal=normais_mundo[v_idx],
-                    posicao_luz=posicao_luz,
-                    posicao_camera=posicao_camera,
-                    cor_objeto=cor_base,
-                    coeficientes=(0.5, 0.8, 0.4),
-                    brilho=32,
-                )
-                for v_idx in face
-            ]
+            # Estágio 4: Phong nos 3 vértices (Gouraud shading). Um vértice é compartilhado
+            # por vários triângulos, então a cor dele é calculada uma única vez.
+            for v_idx in face:
+                if v_idx not in cores:
+                    cores[v_idx] = illumination.calcular_iluminacao_phong(
+                        vertice_mundo=vertices_mundo[v_idx],
+                        normal=normais_mundo[v_idx],
+                        posicao_luz=posicao_luz,
+                        posicao_camera=posicao_camera,
+                        cor_objeto=cor_base,
+                    )
+            cores_vertices = [cores[v_idx] for v_idx in face]
 
             pA, pB, pC = vertices_tela[face[0]], vertices_tela[face[1]], vertices_tela[face[2]]
             zA, zB, zC = profundidades_z[face[0]], profundidades_z[face[1]], profundidades_z[face[2]]
@@ -300,11 +295,7 @@ def main():
     print(f"  n (z da câmera) = {np.round(n, 3)}")
 
     # Item 1: cada sólido é construído uma única vez (vértices, arestas, faces, normais, cor)
-    solidos = {}
-    total = len(cena.CENA)
-    for i, item in enumerate(cena.CENA):
-        print(f"  [{i + 1}/{total}] Criando sólido: {item['nome']}")
-        solidos[item["nome"]] = modeling.obter_solido(item["nome"], RESOLUCAO_MARCHING_CUBES)
+    solidos = cena.criar_solidos(RESOLUCAO_MARCHING_CUBES, mostrar_progresso=True)
 
     # Item 2: leva os sólidos para o mundo e confere |10| e sobreposição
     print("\n  Cena no mundo:")

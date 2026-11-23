@@ -89,8 +89,8 @@ Imagem RGB ◄── Z-buffer ◄── Baricêntrica ◄── Scan-line ◄─
 ```
 
 1. **Malha (uma vez por objeto):** `extrair_malha` avalia o campo numa grade 80³ e chama
-   `skimage.measure.marching_cubes`, que devolve vértices, faces (triângulos) e normais.
-   O resultado fica em `cache_malhas`.
+   `skimage.measure.marching_cubes`, que devolve vértices e faces (triângulos). `criar_solido`
+   calcula as normais, as arestas e guarda tudo no dicionário do sólido.
 2. **Mundo:** `cena.montar_cena` monta `M = T · Rz · Ry · Rx · S` para cada item da `CENA`;
    o `t_y` é calculado para o ponto mais baixo encostar no chão (`y = -2`). As normais vão
    para o mundo pela inversa transposta de M (`math_3d.matriz_normal`).
@@ -123,7 +123,6 @@ combina primitivas de `primitives.py`:
 | `cilindro_x(raio, x_min, x_max, cy, cz)` | Cilindro deitado (eixo X) — **criado neste projeto** |
 | `cone_truncado(y_min, y_max, r_base, r_topo)` | Tronco de cone em Y (`r_topo=0` → cone) |
 | `esfera(cx, cy, cz, raio)` | Esfera |
-| `elipsoide(cx, cy, cz, a, b)` | Elipsoide com simetria em Y |
 | `caixa(cx, cy, cz, hx, hy, hz)` | Paralelepípedo (meias-dimensões) |
 | `toro(cx, cy, cz, r_maior, r_tubo)` | Toro deitado no plano XZ |
 
