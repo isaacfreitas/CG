@@ -41,26 +41,22 @@ def criar_solido(funcao_campo, nome, cor, limites=(-5, 12), resolucao=80):
 
     Tudo está no sistema de coordenadas do objeto.
     """
-    vertices, faces, normais_v = extrair_malha(funcao_campo, limites, resolucao)
+    vertices, faces, _ = extrair_malha(funcao_campo, limites, resolucao)
     faces = faces.astype(np.int64)
 
-    # O scikit-image calcula a normal pelo gradiente no sentido em que F diminui,
-    # ou seja, para dentro do sólido (F < 0). Invertendo o sinal, ela aponta para fora.
-    normais_v = -normais_v
-    normais_v /= np.linalg.norm(normais_v, axis=1, keepdims=True) + 1e-12
-
-    # Normal de cada face: produto vetorial de duas arestas do triângulo.
+    # Normal de cada face: produto vetorial de duas arestas do triângulo, com tamanho 1.
+    # O Marching Cubes entrega os vértices em ordem tal que o resultado aponta para fora.
     a, b, c = vertices[faces[:, 0]], vertices[faces[:, 1]], vertices[faces[:, 2]]
     normais_f = np.cross(b - a, c - a)
     normais_f /= np.linalg.norm(normais_f, axis=1, keepdims=True) + 1e-12
 
-    # Garante que a normal da face aponte para fora: compara com a média das normais
-    # dos seus 3 vértices. Se estiver ao contrário, inverte a normal e a ordem dos
-    # vértices (a ordem define o sentido do produto vetorial, usado no back-face culling).
-    media_v = normais_v[faces].mean(axis=1)
-    inverter = np.sum(normais_f * media_v, axis=1) < 0
-    normais_f[inverter] *= -1
-    faces[inverter] = faces[inverter][:, [0, 2, 1]]
+    # Normal de cada vértice: soma das normais das faces que tocam o vértice, com tamanho 1.
+    # Para cada face, soma a normal dela nos 3 vértices dela.
+    normais_v = np.zeros_like(vertices)
+    for i, face in enumerate(faces):
+        for v in face:
+            normais_v[v] += normais_f[i]
+    normais_v /= np.linalg.norm(normais_v, axis=1, keepdims=True) + 1e-12
 
     # Arestas: cada triângulo tem 3 (v0-v1, v1-v2, v2-v0). Uma aresta é compartilhada
     # por 2 triângulos, então ordenamos cada par e removemos as repetidas.
