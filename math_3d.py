@@ -33,26 +33,41 @@ def rotacao_y(theta_radianos):
     ])
 
 
-def look_at(eye, at, up):
+def base_camera(eye, at, up):
     """
-    Cálculo meticuloso da base vetorial do sistema de coordenadas da câmera.
+    Calcula a base vetorial (u, v, n) do sistema de coordenadas da câmera.
+    Os três vetores são unitários e perpendiculares entre si.
     """
     eye = np.array(eye, dtype=float)
     at = np.array(at, dtype=float)
     up = np.array(up, dtype=float)
 
-    # 1. Vetor n (Eixo Z da câmera - aponta de 'at' para 'eye')
+    # 1. Vetor n (eixo Z da câmera): aponta de 'at' para 'eye'
     n = eye - at
+    if np.linalg.norm(n) == 0:
+        raise ValueError("eye e at são o mesmo ponto: não há direção de visada")
     n = n / np.linalg.norm(n)
 
-    # 2. Vetor u (Eixo X da câmera - ortogonal a 'up' e 'n')
+    # 2. Vetor u (eixo X da câmera): perpendicular a 'up' e a 'n'
     u = np.cross(up, n)
+    if np.linalg.norm(u) == 0:
+        raise ValueError("eye está na mesma vertical de at: o vetor up fica paralelo a n")
     u = u / np.linalg.norm(u)
 
-    # 3. Vetor v (Eixo Y da câmera - ortogonal a 'n' e 'u')
+    # 3. Vetor v (eixo Y da câmera): perpendicular a 'n' e a 'u'
     v = np.cross(n, u)
 
-    # 4. Matriz de Visualização (View Matrix) = Alinhamento de base * Translação
+    return u, v, n
+
+
+def look_at(eye, at, up):
+    """
+    Matriz de visualização 4x4: leva pontos do mundo para o sistema da câmera.
+    """
+    eye = np.array(eye, dtype=float)
+    u, v, n = base_camera(eye, at, up)
+
+    # Matriz de Visualização (View Matrix) = Alinhamento de base * Translação
     view_matrix = np.array([
         [u[0], u[1], u[2], -np.dot(u, eye)],
         [v[0], v[1], v[2], -np.dot(v, eye)],
@@ -61,6 +76,16 @@ def look_at(eye, at, up):
     ])
 
     return view_matrix
+
+
+def aplicar_matriz(matriz, pontos):
+    """
+    Aplica uma matriz 4x4 a uma lista de pontos (N, 3) e devolve (N, 3).
+    Acrescenta a coordenada homogênea 1 em cada ponto antes de multiplicar.
+    """
+    pontos = np.asarray(pontos, dtype=float)
+    homogeneos = np.hstack([pontos, np.ones((len(pontos), 1))])
+    return (matriz @ homogeneos.T).T[:, :3]
 
 
 def projecao_perspectiva(fov_graus, aspecto, z_near, z_far):
