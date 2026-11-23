@@ -33,6 +33,62 @@ def rotacao_y(theta_radianos):
     ])
 
 
+def rotacao_x(theta_radianos):
+    """ Matriz de Rotação em torno do eixo X 4x4 """
+    cos_t = np.cos(theta_radianos)
+    sin_t = np.sin(theta_radianos)
+    return np.array([
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, cos_t, -sin_t, 0.0],
+        [0.0, sin_t, cos_t, 0.0],
+        [0.0, 0.0, 0.0, 1.0]
+    ])
+
+
+def rotacao_z(theta_radianos):
+    """ Matriz de Rotação em torno do eixo Z 4x4 """
+    cos_t = np.cos(theta_radianos)
+    sin_t = np.sin(theta_radianos)
+    return np.array([
+        [cos_t, -sin_t, 0.0, 0.0],
+        [sin_t, cos_t, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0]
+    ])
+
+
+def matriz_mundo(translacao_xyz, rotacao_graus=(0.0, 0.0, 0.0), escala_xyz=(1.0, 1.0, 1.0)):
+    """
+    Matriz do mundo M = T · Rz · Ry · Rx · S (leva do sistema do objeto para o do mundo).
+
+    Lida da direita para a esquerda: primeiro a escala, depois as rotações em x, y e z
+    (todas em torno da origem do objeto) e, por último, a translação até a posição na cena.
+    """
+    rx, ry, rz = np.radians(rotacao_graus)
+    return (translacao(*translacao_xyz)
+            @ rotacao_z(rz) @ rotacao_y(ry) @ rotacao_x(rx)
+            @ escala(*escala_xyz))
+
+
+def aplicar_transformacao(matriz, pontos):
+    """
+    Aplica uma matriz 4x4 a uma lista de pontos (N, 3).
+    Cada ponto vira (x, y, z, 1) em coordenadas homogêneas, é multiplicado pela matriz
+    e volta para (x, y, z).
+    """
+    homogeneos = np.hstack([pontos, np.ones((len(pontos), 1))])
+    return (homogeneos @ matriz.T)[:, :3]
+
+
+def matriz_normal(matriz):
+    """
+    Matriz 3x3 que transforma normais: inversa transposta da parte 3x3 de M.
+    Com escala não uniforme, transformar a normal por M a deixaria torta em relação à
+    superfície; a inversa transposta mantém a normal perpendicular.
+    """
+    return np.linalg.inv(matriz[:3, :3]).T
+
+
 def look_at(eye, at, up):
     """
     Cálculo meticuloso da base vetorial do sistema de coordenadas da câmera.

@@ -4,6 +4,7 @@ import modeling
 import illumination
 import math_3d
 import rasterizer
+import cena
 
 # ==============================================================================
 # CONFIGURAÇÃO GLOBAL — ajuste aqui para testes rápidos
@@ -17,28 +18,9 @@ AT            = np.array([0.0,   0.0,  0.0])   # Ponto para onde as câmeras apo
 UP            = np.array([0.0,   1.0,  0.0])   # Vetor "cima" do mundo
 
 POSICAO_LUZ   = np.array([5.0, 20.0, 15.0])    # Posição da fonte de luz no espaço do mundo
-PY_OFFSET     = -2.0                            # Deslocamento vertical base das peças
 Z_BIAS        = 0.005                           # Tolerância do Z-buffer para evitar z-fighting
 
-# ==============================================================================
-# CENA — peças, posições, cores e limites do Marching Cubes
-# ==============================================================================
-CENA = [
-    # (nome do sólido em modeling.MODELOS, pos_x, pos_z, escala)
-    ("Peão",    -7.5, -4.5, 1.0),
-    ("Lápis",   -4.5,  1.5, 1.0),
-    ("Altere",  -1.5, -4.5, 1.0),
-    ("Martelo",  1.5,  1.5, 1.0),
-    ("Lixeira",  4.5, -4.5, 1.0),
-]
-
-
-def construir_matriz_mundo(px, pz, escala=1.0, rotacao_y=0.0):
-    """Retorna a matriz TRS 4x4 que posiciona a peça no espaço do mundo."""
-    m_e = math_3d.escala(escala, escala, escala)
-    m_r = math_3d.rotacao_y(rotacao_y)
-    m_t = math_3d.translacao(px, PY_OFFSET, pz)
-    return m_t @ m_r @ m_e
+# A cena (posição, rotação e escala de cada objeto) fica em cena.py.
 
 
 # ==============================================================================
@@ -168,7 +150,7 @@ def desenhar_caixa_proporcao_mundo(imagem, z_buffer, view_matrix, proj_matrix, r
 # ==============================================================================
 # PIPELINE DE RENDERIZAÇÃO — Culling + Phong + Scan-line + Z-buffer
 # ==============================================================================
-def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, solidos,
+def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_cena,
                              posicao_camera, posicao_luz, modo_blender=False):
     """
     Renderiza a cena completa em uma imagem NumPy (H x W x 3).
@@ -186,28 +168,20 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, solidos,
 
     desenhar_caixa_proporcao_mundo(imagem, z_buffer, view_matrix, proj_matrix, resolucao_tela)
 
-    for nome, px, pz, escala in CENA:
-        solido  = solidos[nome]
-        verts   = solido["vertices"]
-        faces   = solido["faces"]
-        normais = solido["normais_vertices"]
-        matriz_mundo = construir_matriz_mundo(px, pz, escala=escala)
-        cor_base     = solido["cor"]
+    for obj in objetos_cena:
+        solido   = obj["solido"]
+        faces    = solido["faces"]
+        cor_base = solido["cor"]
 
-        # Estágio 1: transforma vértices e normais para o espaço do mundo
+        # Estágio 1: vértices e normais no espaço do mundo (matriz M = T·Rz·Ry·Rx·S de cena.py).
+        # Normais usam a inversa transposta de M, que as mantém perpendiculares à superfície.
+        vertices_mundo = obj["vertices_mundo"]
+        normais_mundo  = solido["normais_vertices"] @ math_3d.matriz_normal(obj["matriz"]).T
+
         vertices_tela   = []
         profundidades_z = []
-        vertices_mundo  = []
-        normais_mundo   = []
-
-        for i in range(len(verts)):
-            v_mundo = matriz_mundo @ np.array([verts[i][0], verts[i][1], verts[i][2], 1.0])
-            vertices_mundo.append(v_mundo[:3])
-
-            # Normais do sólido já apontam para fora (ver modeling.criar_solido)
-            n_mundo = (matriz_mundo @ np.append(normais[i], 0.0))[:3]
-            normais_mundo.append(n_mundo)
-
+        for v in vertices_mundo:
+            v_mundo = np.append(v, 1.0)
             v_ndc = math_3d.divisao_perspectiva(proj_matrix @ (view_matrix @ v_mundo))
             profundidades_z.append(v_ndc[2])
             vertices_tela.append(ndc_para_pixel(v_ndc, resolucao_tela))
@@ -288,10 +262,15 @@ def main():
 
     # Item 1: cada sólido é construído uma única vez (vértices, arestas, faces, normais, cor)
     solidos = {}
-    total = len(CENA)
-    for i, (nome, *_resto) in enumerate(CENA):
-        print(f"  [{i + 1}/{total}] Criando sólido: {nome}")
-        solidos[nome] = modeling.obter_solido(nome, RESOLUCAO_MARCHING_CUBES)
+    total = len(cena.CENA)
+    for i, item in enumerate(cena.CENA):
+        print(f"  [{i + 1}/{total}] Criando sólido: {item['nome']}")
+        solidos[item["nome"]] = modeling.obter_solido(item["nome"], RESOLUCAO_MARCHING_CUBES)
+
+    # Item 2: leva os sólidos para o mundo e confere |10| e sobreposição
+    print("\n  Cena no mundo:")
+    objetos_cena = cena.montar_cena(solidos)
+    cena.imprimir_resumo(objetos_cena)
 
     # Matrizes de câmera e projeção para cada viewport
     view_principal = math_3d.look_at(eye=EYE_PRINCIPAL, at=AT, up=UP)
@@ -307,7 +286,7 @@ def main():
         print(f"  Rasterizando {res}×{res}...")
         img = renderizar_cena_completa(
             res, view_principal, proj_principal,
-            solidos, EYE_PRINCIPAL, POSICAO_LUZ
+            objetos_cena, EYE_PRINCIPAL, POSICAO_LUZ
         )
         ax.imshow(img)
         ax.set_title(f"Resolução: {res} × {res}", fontsize=11, fontweight='bold', color='#2c3e50')
@@ -321,7 +300,7 @@ def main():
     print("\n  Rasterizando viewport externa 800×800...")
     img_blender = renderizar_cena_completa(
         800, view_blender, proj_blender,
-        solidos, EYE_BLENDER, POSICAO_LUZ,
+        objetos_cena, EYE_BLENDER, POSICAO_LUZ,
         modo_blender=True
     )
 
