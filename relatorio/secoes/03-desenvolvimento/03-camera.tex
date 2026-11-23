@@ -1,6 +1,6 @@
 % Etapa 3 do enunciado: sistema de coordenadas da câmera.
-% Fonte no código: math_3d.py (look_at), main.py (EYE_PRINCIPAL, EYE_BLENDER, AT, UP)
-% Pendência de código: eye só muda editando o valor no main.py (item 3e).
+% Fonte no código: math_3d.py (base_camera, look_at, aplicar_matriz), visualizar_camera.py,
+% main.py (EYE_PRINCIPAL, EYE_BLENDER, AT, UP, --eye)
 \subsection{Sistema de coordenadas da câmera}\label{sec:camera}
 
 A câmera é definida por três pontos: a posição do observador (\textit{eye}), o ponto para onde ele
@@ -49,4 +49,7 @@ como mostra o segundo exemplo, com $eye = (26;\ 18;\ 28)$.
   \fonte{Os autores (2026).}
 \end{figure}
 
-\confirmar{explicar como o usuário muda o valor de eye, depois de implementado no código (item 3e)}
+O valor de \textit{eye} é um argumento de linha de comando, como em \texttt{python3 main.py --eye 26 18 28}.
+O programa recalcula a base, imprime os vetores $\vec{u}$, $\vec{v}$ e $\vec{n}$ e gera a imagem
+de novo. O script \texttt{visualizar\_camera.py} aceita o mesmo argumento e produz a
+Figura~\ref{fig:camera}.

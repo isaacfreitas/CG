@@ -22,7 +22,7 @@ imagem final rasterizada) e alguns ajustes pontuais exigidos pelo enunciado.
 |---|---|---|
 | 1 – Modelagem dos 5 objetos | 🟢 Pronto | `modeling.criar_solido` retorna o sólido completo; `visualizar_objetos.py` mostra cada um no seu sistema |
 | 2 – Cena no mundo | 🟡 Parcial | Cena montada e validada; falta usar rotação/escala de fato, `rotacao_x/z` e plot 3D do mundo |
-| 3 – Sistema da câmera | 🟡 Parcial | `look_at` calcula a base; falta exibir a base, plotar em coordenadas da câmera e marcar a origem corretamente |
+| 3 – Sistema da câmera | 🟢 Pronto | `math_3d.base_camera` calcula u, v, n; `visualizar_camera.py` plota a cena em coordenadas de câmera; `--eye` troca o observador; origem marcada em (0, 0, 0) |
 | 4 – Projeção perspectiva | 🟡 Parcial | Matemática pronta; falta recorte pelo volume de visão, plot 3D + janela de projeção, arestas na cor do sólido |
 | 5 – Iluminação | 🟢 Pronto | Phong (ambiente + difusa + especular) por vértice |
 | 6 – Rasterização | 🟢 Quase pronto | 3 resoluções, scan-line par-ímpar, baricêntrica, Bresenham, Z-buffer; ajustar o culling para o eixo z da câmera |
@@ -37,15 +37,25 @@ imagem final rasterizada) e alguns ajustes pontuais exigidos pelo enunciado.
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt   # numpy, matplotlib, scikit-image
-python3 main.py
+python3 main.py                        # eye padrão da Tela 1
+python3 main.py --eye 26 18 28         # outro eye na Tela 1 (item 3e)
+python3 visualizar_camera.py --eye 26 18 28   # cena em coordenadas de câmera (item 3)
 ```
 
-Saída:
-- **Tela 1:** a cena pela câmera principal (`EYE_PRINCIPAL = (7.5, 10, 5)`) em 200, 400 e 800 px.
+Saída do `main.py`:
+- **Terminal:** o eye e a base da câmera principal (`u`, `v`, `n`).
+- **Tela 1:** a cena pela câmera principal (padrão `EYE_PRINCIPAL = (7.5, 10, 5)`, ou o valor de
+  `--eye`) em 200, 400 e 800 px.
 - **Tela 2:** vista externa "modo Blender" (`EYE_BLENDER = (26, 18, 28)`) em 800 px, com a
-  gaiola da cena e um losango laranja perto da origem.
+  gaiola da cena.
+- **Nas duas telas:** uma pequena cruz laranja marca a origem do mundo, exatamente em (0, 0, 0).
 
 > A renderização é em Python puro, pixel a pixel: a resolução de 800×800 leva alguns minutos.
+
+O `visualizar_camera.py` é leve (segundos). Ele imprime a base, leva os vértices de todos os
+sólidos para o sistema da câmera e mostra o resultado em 3D, com os eixos `u`, `v`, `n` e um
+ponto preto na origem do mundo. Com `--salvar NOME`, grava `NOME.png` na pasta de figuras da
+câmera do relatório.
 
 ---
 
@@ -56,10 +66,11 @@ Saída:
 | `primitives.py` | Formas implícitas F(x,y,z) (F<0 dentro) e operações CSG | Pronto (+ `cilindro_x` novo) |
 | `modeling.py` | `extrair_malha` (Marching Cubes), os 5 objetos, `criar_solido`/`obter_solido` e o catálogo `MODELOS` (limites e cor) | Pronto |
 | `visualizar_objetos.py` | Item 1e: plot 3D de cada sólido no sistema do objeto (`--salvar` grava as figuras do relatório) | Pronto |
-| `math_3d.py` | Matrizes 4×4: translação, escala, rotação Y, look-at, perspectiva | Falta `rotacao_x`, `rotacao_z`, `base_camera` |
+| `visualizar_camera.py` | Item 3: plot 3D da cena em coordenadas de câmera, com a origem do mundo e os eixos u, v, n (`--eye`, `--salvar`) | Pronto |
+| `math_3d.py` | Matrizes 4×4: translação, escala, rotação Y, `base_camera` (u, v, n), look-at, `aplicar_matriz`, perspectiva | Falta `rotacao_x`, `rotacao_z` |
 | `illumination.py` | Modelo de Phong por vértice | Pronto |
 | `rasterizer.py` | Bresenham, área, baricêntricas, scan-line par-ímpar | Pronto |
-| `main.py` | Configuração (`CENA`, câmeras, luz), renderização e exibição | Pronto para o item 6; faltam as visualizações dos itens 1–4 |
+| `main.py` | Configuração (`CENA`, câmeras, luz), renderização e exibição | Pronto para o item 6 (`--eye` e origem do mundo incluídos); faltam as visualizações dos itens 2 e 4 |
 | `requirements.txt` | `numpy==2.2.6`, `matplotlib==3.10.9`, `scikit-image==0.25.2` | Pronto |
 
 ### Pipeline (o que acontece em `main.py`)
@@ -77,8 +88,9 @@ Imagem RGB ◄── Z-buffer ◄── Baricêntrica ◄── Scan-line ◄─
    O resultado fica em `cache_malhas`.
 2. **Mundo:** `construir_matriz_mundo(px, pz, escala, rotacao_y)` monta `M = T · R_y · S`.
    Todos os objetos descem `PY_OFFSET = -2` em y.
-3. **Câmera:** `look_at(eye, at, up)` calcula `n = (eye−at)/|eye−at|`, `u = up×n`, `v = n×u` e
-   monta a view matrix.
+3. **Câmera:** `base_camera(eye, at, up)` calcula `n = (eye−at)/|eye−at|`, `u = up×n`,
+   `v = n×u` e devolve os três. `look_at` usa essa base para montar a view matrix, e
+   `aplicar_matriz(matriz, pontos)` leva uma lista de pontos (N, 3) de um sistema ao outro.
 4. **Projeção:** `projecao_perspectiva(fov, aspecto, near, far)` + `divisao_perspectiva` → NDC;
    `ndc_para_pixel` → coordenadas da janela.
 5. **Culling:** descarta a face se `normal_face · (eye − v0) ≤ 0`.
@@ -217,12 +229,15 @@ Verificações feitas (resolução 80):
 - [ ] **Plot 3D da cena no mundo** (item 2b), com eixos.
 
 ### Item 3 — Câmera
-- [ ] Função `base_camera(eye, at, up)` que devolve e imprime `u, v, n` (item 3a).
-- [ ] Transformar os vértices para coordenadas da câmera e **plotar em 3D** (itens 3b, 3c).
-- [ ] **Ponto na origem do mundo** (item 3d). O losango atual do modo Blender está deslocado
-      para `(0, −1.9, 0)`, não exatamente na origem `(0, 0, 0)`.
-- [ ] **Eye variável** (item 3e): ler o eye por argumento/`input()`/slider e regerar a imagem.
-      Hoje só dá para mudar editando `EYE_PRINCIPAL` no código.
+- [x] Função `base_camera(eye, at, up)` que devolve `u, v, n`; `main.py` e
+      `visualizar_camera.py` imprimem a base (item 3a).
+- [x] Transformar os vértices para coordenadas da câmera e **plotar em 3D** (itens 3b, 3c):
+      `visualizar_camera.py`.
+- [x] **Ponto na origem do mundo** (item 3d): cruz laranja em `(0, 0, 0)` no `main.py` e ponto
+      preto no `visualizar_camera.py`.
+- [x] **Eye variável** (item 3e): `--eye X Y Z` no `main.py` e no `visualizar_camera.py`.
+- [ ] Regerar `eye1.png` e `eye2.png` do relatório com `visualizar_camera.py --salvar`
+      (as figuras atuais foram feitas por um script que não está no repositório).
 
 ### Item 4 — Projeção
 - [ ] **Recorte pelo volume de visão:** descartar faces atrás do near ou totalmente fora do
@@ -259,7 +274,7 @@ Verificações feitas (resolução 80):
 
 1. `criar_solido` + plot de cada objeto no seu sistema (item 1).
 2. `rotacao_x/z`, rotação/escala na `CENA`, `validar_cena`, plot do mundo (item 2).
-3. `base_camera`, plot no sistema da câmera com a origem marcada, eye por parâmetro (item 3).
+3. ~~`base_camera`, plot no sistema da câmera com a origem marcada, eye por parâmetro (item 3).~~ Feito.
 4. Recorte + plot 3D com a janela de projeção + arestas na cor do sólido (item 4).
 5. Culling via z da câmera no `renderizar_cena_completa` (item 6).
 6. Gerar as figuras e escrever o relatório.
