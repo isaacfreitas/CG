@@ -22,9 +22,10 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
+import cena
 import math_3d
 import modeling
-from main import CENA, EYE_PRINCIPAL, AT, UP, construir_matriz_mundo
+from main import EYE_PRINCIPAL, AT, UP
 from visualizar_objetos import para_plot
 
 RESOLUCAO = 50          # grade do Marching Cubes (menor que a da cena, para o plot ficar leve)
@@ -53,11 +54,11 @@ def desenhar_cena_na_camera(eye, ax):
     view = math_3d.look_at(eye, AT, UP)
     todos_os_pontos = [np.zeros((1, 3))]  # o centro da câmera também precisa caber no gráfico
 
-    # 3b e 3c: vértices do objeto -> mundo -> câmera, e desenho do sólido
-    for nome, px, pz, escala in CENA:
-        solido = modeling.obter_solido(nome, RESOLUCAO)
-        objeto_para_camera = view @ construir_matriz_mundo(px, pz, escala)
-        vertices = math_3d.aplicar_matriz(objeto_para_camera, solido["vertices"])
+    # 3b e 3c: vértices do mundo -> câmera (cena.montar_cena já leva objeto -> mundo)
+    solidos = {item["nome"]: modeling.obter_solido(item["nome"], RESOLUCAO) for item in cena.CENA}
+    for obj in cena.montar_cena(solidos):
+        solido = obj["solido"]
+        vertices = math_3d.aplicar_transformacao(view, obj["vertices_mundo"])
         todos_os_pontos.append(vertices)
 
         cor = solido["cor"]
@@ -66,7 +67,7 @@ def desenhar_cena_na_camera(eye, ax):
                                              linewidths=0.1, alpha=0.9))
 
     # 3d: origem do mundo vista da câmera
-    origem = math_3d.aplicar_matriz(view, [[0.0, 0.0, 0.0]])
+    origem = math_3d.aplicar_transformacao(view, np.zeros((1, 3)))
     todos_os_pontos.append(origem)
     o = para_plot(origem[0])
     ax.scatter(*o, color="black", s=40)

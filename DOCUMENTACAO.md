@@ -21,7 +21,7 @@ imagem final rasterizada) e alguns ajustes pontuais exigidos pelo enunciado.
 | Item do enunciado | Status | Resumo |
 |---|---|---|
 | 1 – Modelagem dos 5 objetos | 🟢 Pronto | `modeling.criar_solido` retorna o sólido completo; `visualizar_objetos.py` mostra cada um no seu sistema |
-| 2 – Cena no mundo | 🟡 Parcial | Cena montada e validada; falta usar rotação/escala de fato, `rotacao_x/z` e plot 3D do mundo |
+| 2 – Cena no mundo | 🟢 Pronto | `cena.py`: M = T·Rz·Ry·Rx·S com escala e rotação reais, `validar_cena` automática; `visualizar_cena.py` plota o mundo |
 | 3 – Sistema da câmera | 🟢 Pronto | `math_3d.base_camera` calcula u, v, n; `visualizar_camera.py` plota a cena em coordenadas de câmera; `--eye` troca o observador; origem marcada em (0, 0, 0) |
 | 4 – Projeção perspectiva | 🟡 Parcial | Matemática pronta; falta recorte pelo volume de visão, plot 3D + janela de projeção, arestas na cor do sólido |
 | 5 – Iluminação | 🟢 Pronto | Phong (ambiente + difusa + especular) por vértice |
@@ -66,8 +66,10 @@ câmera do relatório.
 | `primitives.py` | Formas implícitas F(x,y,z) (F<0 dentro) e operações CSG | Pronto (+ `cilindro_x` novo) |
 | `modeling.py` | `extrair_malha` (Marching Cubes), os 5 objetos, `criar_solido`/`obter_solido` e o catálogo `MODELOS` (limites e cor) | Pronto |
 | `visualizar_objetos.py` | Item 1e: plot 3D de cada sólido no sistema do objeto (`--salvar` grava as figuras do relatório) | Pronto |
+| `math_3d.py` | Matrizes 4×4: translação, escala, rotações X/Y/Z, `matriz_mundo`, `matriz_normal`, `aplicar_transformacao`, `base_camera` (u, v, n), look-at, perspectiva | Pronto |
+| `cena.py` | `CENA` (posição, rotação, escala), `montar_cena`, `validar_cena` (limite |10| e sobreposição) | Pronto |
+| `visualizar_cena.py` | Item 2b: plot 3D da cena no mundo com eixos, origem e cubo |10| (`--salvar` grava a figura do relatório) | Pronto |
 | `visualizar_camera.py` | Item 3: plot 3D da cena em coordenadas de câmera, com a origem do mundo e os eixos u, v, n (`--eye`, `--salvar`) | Pronto |
-| `math_3d.py` | Matrizes 4×4: translação, escala, rotação Y, `base_camera` (u, v, n), look-at, `aplicar_matriz`, perspectiva | Falta `rotacao_x`, `rotacao_z` |
 | `illumination.py` | Modelo de Phong por vértice | Pronto |
 | `rasterizer.py` | Bresenham, área, baricêntricas, scan-line par-ímpar | Pronto |
 | `main.py` | Configuração (`CENA`, câmeras, luz), renderização e exibição | Pronto para o item 6 (`--eye` e origem do mundo incluídos); faltam as visualizações dos itens 2 e 4 |
@@ -86,11 +88,12 @@ Imagem RGB ◄── Z-buffer ◄── Baricêntrica ◄── Scan-line ◄─
 1. **Malha (uma vez por objeto):** `extrair_malha` avalia o campo numa grade 80³ e chama
    `skimage.measure.marching_cubes`, que devolve vértices, faces (triângulos) e normais.
    O resultado fica em `cache_malhas`.
-2. **Mundo:** `construir_matriz_mundo(px, pz, escala, rotacao_y)` monta `M = T · R_y · S`.
-   Todos os objetos descem `PY_OFFSET = -2` em y.
+2. **Mundo:** `cena.montar_cena` monta `M = T · Rz · Ry · Rx · S` para cada item da `CENA`;
+   o `t_y` é calculado para o ponto mais baixo encostar no chão (`y = -2`). As normais vão
+   para o mundo pela inversa transposta de M (`math_3d.matriz_normal`).
 3. **Câmera:** `base_camera(eye, at, up)` calcula `n = (eye−at)/|eye−at|`, `u = up×n`,
    `v = n×u` e devolve os três. `look_at` usa essa base para montar a view matrix, e
-   `aplicar_matriz(matriz, pontos)` leva uma lista de pontos (N, 3) de um sistema ao outro.
+   `aplicar_transformacao(matriz, pontos)` leva uma lista de pontos (N, 3) de um sistema ao outro.
 4. **Projeção:** `projecao_perspectiva(fov, aspecto, near, far)` + `divisao_perspectiva` → NDC;
    `ndc_para_pixel` → coordenadas da janela.
 5. **Culling:** descarta a face se `normal_face · (eye − v0) ≤ 0`.
@@ -219,14 +222,14 @@ Verificações feitas (resolução 80):
       sugestão na documentação de apoio, então outras equipes podem ter escolhido também).
 
 ### Item 2 — Cena no mundo
-- [ ] Criar `rotacao_x` e `rotacao_z` em `math_3d.py` e generalizar a matriz do mundo
+- [x] Criar `rotacao_x` e `rotacao_z` em `math_3d.py` e generalizar a matriz do mundo
       (`M = T · Rz · Ry · Rx · S`).
-- [ ] **Usar de fato escala e rotação** na `CENA` (hoje todos têm escala 1.0 e rotação 0;
+- [x] **Usar de fato escala e rotação** na `CENA` (hoje todos têm escala 1.0 e rotação 0;
       o enunciado pede "usando transformações em escala, rotação e translação").
       Ex.: girar o martelo/altere em Y e escalar algum objeto.
-- [ ] Validação automática do limite |10| e da não-sobreposição (`validar_cena`, seção 6.3
+- [x] Validação automática do limite |10| e da não-sobreposição (`validar_cena`, seção 6.3
       da documentação). A conferência deste documento foi manual.
-- [ ] **Plot 3D da cena no mundo** (item 2b), com eixos.
+- [x] **Plot 3D da cena no mundo** (item 2b), com eixos.
 
 ### Item 3 — Câmera
 - [x] Função `base_camera(eye, at, up)` que devolve `u, v, n`; `main.py` e
