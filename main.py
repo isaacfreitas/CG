@@ -1,3 +1,5 @@
+import argparse
+
 import numpy as np
 import matplotlib.pyplot as plt
 import modeling
@@ -78,29 +80,6 @@ def desenhar_ticks(ax, view_matrix, proj_matrix, res):
                     fontsize=escala_fonte, ha='right', va='center', weight='bold')
 
 
-def gerar_linhas_camera_blender(eye, at, tamanho=3.5):
-    """Gera os segmentos que formam a pirâmide visual da câmera no espaço do mundo."""
-    eye = np.asarray(eye, dtype=float)
-    at  = np.asarray(at,  dtype=float)
-
-    n = eye - at;  n = n / np.linalg.norm(n)
-    u = np.cross(np.array([0.0, 1.0, 0.0]), n);  u = u / np.linalg.norm(u)
-    v = np.cross(n, u)
-
-    base = eye - n * tamanho
-    c1   = base + u * (tamanho * 0.7) + v * (tamanho * 0.5)
-    c2   = base - u * (tamanho * 0.7) + v * (tamanho * 0.5)
-    c3   = base - u * (tamanho * 0.7) - v * (tamanho * 0.5)
-    c4   = base + u * (tamanho * 0.7) - v * (tamanho * 0.5)
-    topo = base + v * (tamanho * 0.8)
-
-    return [
-        (eye, c1), (eye, c2), (eye, c3), (eye, c4),
-        (c1, c2), (c2, c3), (c3, c4), (c4, c1),
-        (base, topo), (topo, c1),
-    ]
-
-
 def desenhar_reta_3d_no_zbuffer(p1_mundo, p2_mundo, cor, imagem, z_buffer, view_matrix, proj_matrix, res):
     """Projeta e rasteriza uma linha 3D no Z-buffer via Bresenham."""
     def projetar(p):
@@ -128,6 +107,16 @@ def desenhar_reta_3d_no_zbuffer(p1_mundo, p2_mundo, cor, imagem, z_buffer, view_
             if z < z_buffer[py, px] + Z_BIAS:
                 z_buffer[py, px] = z
                 imagem[py, px]   = np.array(cor, dtype=np.uint8)
+
+
+def desenhar_origem_mundo(imagem, z_buffer, view_matrix, proj_matrix, res):
+    """Marca a origem do mundo (0, 0, 0) com uma pequena cruz laranja (item 3d)."""
+    COR_ORIGEM = [255, 110, 30]
+    r = 0.4
+    origem = np.zeros(3)
+    for eixo in np.eye(3):
+        desenhar_reta_3d_no_zbuffer(origem - r * eixo, origem + r * eixo, COR_ORIGEM,
+                                    imagem, z_buffer, view_matrix, proj_matrix, res)
 
 
 def desenhar_caixa_proporcao_mundo(imagem, z_buffer, view_matrix, proj_matrix, res):
@@ -169,7 +158,7 @@ def desenhar_caixa_proporcao_mundo(imagem, z_buffer, view_matrix, proj_matrix, r
 # PIPELINE DE RENDERIZAÇÃO — Culling + Phong + Scan-line + Z-buffer
 # ==============================================================================
 def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, solidos,
-                             posicao_camera, posicao_luz, modo_blender=False):
+                             posicao_camera, posicao_luz):
     """
     Renderiza a cena completa em uma imagem NumPy (H x W x 3).
 
@@ -256,26 +245,7 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, solidos,
                                      + gamma * cores_vertices[2])
                         imagem[y, x] = (np.clip(cor_pixel, 0.0, 1.0) * 255).astype(np.uint8)
 
-    # Modo Blender: marca a origem do mundo e a pirâmide da câmera principal
-    if modo_blender:
-        r         = 0.4
-        offset_y  = np.array([0, -1.9, 0])
-        COR_LOSANGO  = [255, 110, 30]
-
-        arestas_losango = [
-            ([r, 0, 0], [0, r, 0]), ([0, r, 0], [-r, 0, 0]),
-            ([-r, 0, 0], [0, -r, 0]), ([0, -r, 0], [r, 0, 0]),
-            ([r, 0, 0], [0, 0, r]), ([0, 0, r], [-r, 0, 0]),
-            ([-r, 0, 0], [0, 0, -r]), ([0, 0, -r], [r, 0, 0]),
-            ([0, r, 0], [0, 0, r]), ([0, 0, r], [0, -r, 0]),
-            ([0, -r, 0], [0, 0, -r]), ([0, 0, -r], [0, r, 0]),
-        ]
-        for p1, p2 in arestas_losango:
-            desenhar_reta_3d_no_zbuffer(
-                np.array(p1) + offset_y, np.array(p2) + offset_y,
-                COR_LOSANGO, imagem, z_buffer, view_matrix, proj_matrix, resolucao_tela
-            )
-
+    desenhar_origem_mundo(imagem, z_buffer, view_matrix, proj_matrix, resolucao_tela)
 
     return imagem
 
@@ -283,8 +253,26 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, solidos,
 # ==============================================================================
 # EXECUÇÃO PRINCIPAL
 # ==============================================================================
+def ler_argumentos():
+    """Lê a posição do observador da linha de comando (item 3e)."""
+    parser = argparse.ArgumentParser(description="Pipeline gráfico da Tela 1 e da Tela 2")
+    parser.add_argument("--eye", nargs=3, type=float, metavar=("X", "Y", "Z"),
+                        default=EYE_PRINCIPAL.tolist(),
+                        help="posição do observador na Tela 1 (padrão: 7.5 10 5)")
+    return parser.parse_args()
+
+
 def main():
     print("=== PIPELINE CG — MALHAS + PHONG + SCAN-LINE + Z-BUFFER ===")
+
+    eye_principal = np.array(ler_argumentos().eye)
+
+    # Item 3a: base vetorial da câmera principal
+    u, v, n = math_3d.base_camera(eye_principal, AT, UP)
+    print(f"  eye = {eye_principal}")
+    print(f"  u (x da câmera) = {np.round(u, 3)}")
+    print(f"  v (y da câmera) = {np.round(v, 3)}")
+    print(f"  n (z da câmera) = {np.round(n, 3)}")
 
     # Item 1: cada sólido é construído uma única vez (vértices, arestas, faces, normais, cor)
     solidos = {}
@@ -294,7 +282,7 @@ def main():
         solidos[nome] = modeling.obter_solido(nome, RESOLUCAO_MARCHING_CUBES)
 
     # Matrizes de câmera e projeção para cada viewport
-    view_principal = math_3d.look_at(eye=EYE_PRINCIPAL, at=AT, up=UP)
+    view_principal = math_3d.look_at(eye=eye_principal, at=AT, up=UP)
     view_blender   = math_3d.look_at(eye=EYE_BLENDER,   at=AT, up=UP)
     proj_principal = math_3d.projecao_perspectiva(fov_graus=58, aspecto=1.0, z_near=0.1, z_far=100)
     proj_blender   = math_3d.projecao_perspectiva(fov_graus=50, aspecto=1.0, z_near=0.1, z_far=100)
@@ -307,7 +295,7 @@ def main():
         print(f"  Rasterizando {res}×{res}...")
         img = renderizar_cena_completa(
             res, view_principal, proj_principal,
-            solidos, EYE_PRINCIPAL, POSICAO_LUZ
+            solidos, eye_principal, POSICAO_LUZ
         )
         ax.imshow(img)
         ax.set_title(f"Resolução: {res} × {res}", fontsize=11, fontweight='bold', color='#2c3e50')
@@ -321,8 +309,7 @@ def main():
     print("\n  Rasterizando viewport externa 800×800...")
     img_blender = renderizar_cena_completa(
         800, view_blender, proj_blender,
-        solidos, EYE_BLENDER, POSICAO_LUZ,
-        modo_blender=True
+        solidos, EYE_BLENDER, POSICAO_LUZ
     )
 
     fig2, ax2 = plt.subplots(figsize=(8, 8))
