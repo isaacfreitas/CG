@@ -25,7 +25,7 @@ imagem final rasterizada) e alguns ajustes pontuais exigidos pelo enunciado.
 | 3 – Sistema da câmera | 🟢 Pronto | `math_3d.base_camera` calcula u, v, n; `visualizar_camera.py` plota a cena em coordenadas de câmera; `--eye` troca o observador; origem marcada em (0, 0, 0) |
 | 4 – Projeção perspectiva | 🟢 Pronto | Recorte pelo volume de visão (`face_no_volume_de_visao`); `visualizar_projecao.py` plota os sólidos e a janela de projeção; arestas com Bresenham na cor do sólido |
 | 5 – Iluminação | 🟢 Pronto | Phong (ambiente + difusa + especular) por vértice |
-| 6 – Rasterização | 🟢 Quase pronto | 3 resoluções, scan-line par-ímpar, baricêntrica, Bresenham, Z-buffer; ajustar o culling para o eixo z da câmera |
+| 6 – Rasterização | 🟢 Pronto | 3 resoluções, scan-line par-ímpar, baricêntrica, Bresenham, Z-buffer; culling em coordenadas de câmera com a normal da face |
 | Relatório (Obs. 1) | 🔴 Falta | Capa, introdução, objetivo, desenvolvimento, simulações, conclusão, referências |
 | Entrega (Obs. 2) | 🔴 Falta | `.zip` do código (sem `.venv`, `__pycache__`) + `.pdf` do relatório |
 
@@ -101,7 +101,8 @@ Imagem RGB ◄── Z-buffer ◄── Baricêntrica ◄── Scan-line ◄─
    `ndc_para_pixel` → coordenadas da janela.
 5. **Recorte:** `face_no_volume_de_visao` descarta a face inteira se algum vértice está atrás
    do near ou se os 3 estão fora do mesmo plano do frustum (sem recorte de polígonos).
-6. **Culling:** descarta a face se `normal_face · (eye − v0) ≤ 0`.
+6. **Culling:** em coordenadas de câmera, descarta a face se `normal_face · (−v0) ≤ 0`
+   (`face_voltada_para_camera`; a normal vem de `normais_faces`).
 7. **Iluminação:** Phong nos 3 vértices (ka=0.5, kd=0.8, ks=0.4, brilho=32, luz em (5, 20, 15)).
 8. **Rasterização:** `scan_line_par_impar` lista os pixels do triângulo; para cada pixel, as
    coordenadas baricêntricas interpolam z (teste no Z-buffer) e a cor (Gouraud). Depois,
@@ -264,9 +265,10 @@ Verificações feitas (resolução 80):
 
 ### Item 6 — Rasterização
 - [x] 3 resoluções (200, 400, 800), scan-line par-ímpar, baricêntrica, Z-buffer, Bresenham.
-- [ ] **Culling pelo eixo z da câmera:** o enunciado pede "normal + eixo z da câmera"; hoje o
-      teste é `normal · (eye − v0)` no mundo. Fazer em coordenadas de câmera (seção 6.5 da
-      documentação).
+- [x] **Culling em coordenadas de câmera** (o enunciado pede "normal + eixo z da câmera"):
+      `math_3d.face_voltada_para_camera` usa a normal da face (`normais_faces` do sólido, levada
+      à câmera) e o vetor até o observador, que na câmera é `-v0`. O teste só pelo sinal de
+      `normal_z` foi medido e descartado: abria uma falha visível na borda da lixeira.
 - [ ] Confirmar no livro-texto se a subseção 5.2.1 é Bresenham (o que está implementado).
 
 ### Ajustes de cena / qualidade
@@ -288,5 +290,5 @@ Verificações feitas (resolução 80):
 2. `rotacao_x/z`, rotação/escala na `CENA`, `validar_cena`, plot do mundo (item 2).
 3. ~~`base_camera`, plot no sistema da câmera com a origem marcada, eye por parâmetro (item 3).~~ Feito.
 4. ~~Recorte + plot 3D com a janela de projeção + arestas na cor do sólido (item 4).~~ Feito.
-5. Culling via z da câmera no `renderizar_cena_completa` (item 6).
+5. ~~Culling em coordenadas de câmera no `renderizar_cena_completa` (item 6).~~ Feito.
 6. Gerar as figuras e escrever o relatório.
