@@ -1,6 +1,6 @@
 % Etapa 1 do enunciado: modelagem dos 5 objetos.
 % Fonte no código: primitives.py, modeling.py
-% Pendência de código: função que retorna o sólido completo (vértices, arestas, faces, normais, cor).
+% Função que retorna o sólido: modeling.criar_solido. Figuras geradas por visualizar_objetos.py --salvar.
 \subsection{Modelagem dos objetos}\label{sec:modelagem}
 
 Foram modelados cinco objetos do cotidiano: lápis, peão de xadrez, haltere, martelo e lixeira. Cada
@@ -25,7 +25,26 @@ algoritmo \textit{Marching Cubes} \cite{lorensen1987}, da biblioteca scikit-imag
 normal por vértice. Essas normais saem apontando para dentro, então o código troca o sinal para que
 apontem para fora. A normal de cada face é o produto vetorial $(v_1 - v_0) \times (v_2 - v_0)$.
 
-\confirmar{explicar a função que retorna o sólido (vértices, arestas, faces, normais e cor), depois de criada no código}
+Como pede o enunciado, a função \texttt{criar\_solido} (em \texttt{modeling.py}) devolve o sólido
+completo, em coordenadas do objeto:
+
+\begin{itemize}
+  \item \textbf{vértices}: matriz $V \times 3$ com as coordenadas $(x, y, z)$;
+  \item \textbf{faces}: matriz $F \times 3$, cada linha com os índices dos três vértices de um
+        triângulo;
+  \item \textbf{arestas}: matriz $A \times 2$ com os pares de vértices ligados. Cada triângulo tem
+        três arestas e cada aresta é compartilhada por dois triângulos, então os pares são
+        ordenados e os repetidos são removidos;
+  \item \textbf{normais das faces}: vetor unitário de cada triângulo, apontando para fora;
+  \item \textbf{normais dos vértices}: vetor unitário de cada vértice, apontando para fora;
+  \item \textbf{cor}: RGB do sólido, a mesma para faces e arestas.
+\end{itemize}
+
+Para garantir que a normal de cada face aponta para fora, ela é comparada com a média das normais
+dos seus três vértices. Se o produto escalar for negativo, a normal e a ordem dos vértices da face
+são invertidas. Dois testes confirmam o resultado nos cinco objetos: o volume calculado pelas faces
+(teorema da divergência) é positivo, o que só acontece com as normais para fora, e toda malha
+satisfaz $V - A + F = 2$, ou seja, é uma superfície fechada, sem buracos.
 
 A Figura~\ref{fig:objetos} mostra os objetos, cada um no seu sistema, com os eixos e as normais de
 algumas faces (setas pretas).

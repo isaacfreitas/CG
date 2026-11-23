@@ -24,19 +24,13 @@ Z_BIAS        = 0.005                           # Tolerância do Z-buffer para e
 # CENA — peças, posições, cores e limites do Marching Cubes
 # ==============================================================================
 CENA = [
-    # (função_de_campo, pos_x, pos_z, cor_hex, label, escala, limites_malha)
-    (modeling.gerar_campo_peao,   -7.5, -4.5, "#E63946", "Peão",   1.0, None),
-    (modeling.gerar_campo_lapis,  -4.5,  1.5, "#F4A261", "Lápis",  1.0, (-1.5, 8)),
-    (modeling.gerar_campo_altere, -1.5, -4.5, "#2A9D8F", "Altere", 1.0, (-3.5, 3.5)),
-    (modeling.gerar_campo_martelo, 1.5,  1.5, "#A8DADC", "Martelo", 1.0, (-2, 6)),
-    (modeling.gerar_campo_lixeira, 4.5, -4.5, "#C77DFF", "Lixeira", 1.0, (-2.5, 4.5)),
+    # (nome do sólido em modeling.MODELOS, pos_x, pos_z, escala)
+    ("Peão",    -7.5, -4.5, 1.0),
+    ("Lápis",   -4.5,  1.5, 1.0),
+    ("Altere",  -1.5, -4.5, 1.0),
+    ("Martelo",  1.5,  1.5, 1.0),
+    ("Lixeira",  4.5, -4.5, 1.0),
 ]
-
-
-def hex_to_rgb(hex_str):
-    """Converte '#RRGGBB' em tupla RGB float [0.0, 1.0]."""
-    hex_str = hex_str.lstrip('#')
-    return [int(hex_str[i:i + 2], 16) / 255.0 for i in (0, 2, 4)]
 
 
 def construir_matriz_mundo(px, pz, escala=1.0, rotacao_y=0.0):
@@ -174,7 +168,7 @@ def desenhar_caixa_proporcao_mundo(imagem, z_buffer, view_matrix, proj_matrix, r
 # ==============================================================================
 # PIPELINE DE RENDERIZAÇÃO — Culling + Phong + Scan-line + Z-buffer
 # ==============================================================================
-def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, cache_malhas,
+def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, solidos,
                              posicao_camera, posicao_luz, modo_blender=False):
     """
     Renderiza a cena completa em uma imagem NumPy (H x W x 3).
@@ -192,11 +186,13 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, cache_mal
 
     desenhar_caixa_proporcao_mundo(imagem, z_buffer, view_matrix, proj_matrix, resolucao_tela)
 
-    for func_campo, px, pz, cor_hex, label, escala, limites in CENA:
-        cache_key = func_campo.__name__ + str(limites)
-        verts, faces, normais = cache_malhas[cache_key]
+    for nome, px, pz, escala in CENA:
+        solido  = solidos[nome]
+        verts   = solido["vertices"]
+        faces   = solido["faces"]
+        normais = solido["normais_vertices"]
         matriz_mundo = construir_matriz_mundo(px, pz, escala=escala)
-        cor_base     = hex_to_rgb(cor_hex)
+        cor_base     = solido["cor"]
 
         # Estágio 1: transforma vértices e normais para o espaço do mundo
         vertices_tela   = []
@@ -208,8 +204,8 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, cache_mal
             v_mundo = matriz_mundo @ np.array([verts[i][0], verts[i][1], verts[i][2], 1.0])
             vertices_mundo.append(v_mundo[:3])
 
-            # Marching Cubes retorna normais apontando para o interior (F < 0); invertemos
-            n_mundo = (matriz_mundo @ np.append(-normais[i], 0.0))[:3]
+            # Normais do sólido já apontam para fora (ver modeling.criar_solido)
+            n_mundo = (matriz_mundo @ np.append(normais[i], 0.0))[:3]
             normais_mundo.append(n_mundo)
 
             v_ndc = math_3d.divisao_perspectiva(proj_matrix @ (view_matrix @ v_mundo))
@@ -290,15 +286,12 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, cache_mal
 def main():
     print("=== PIPELINE CG — MALHAS + PHONG + SCAN-LINE + Z-BUFFER ===")
 
-    # Cache de malhas: cada peça é extraída uma única vez
-    cache_malhas = {}
+    # Item 1: cada sólido é construído uma única vez (vértices, arestas, faces, normais, cor)
+    solidos = {}
     total = len(CENA)
-    for i, (func_campo, px, pz, cor_hex, label, escala, limites) in enumerate(CENA):
-        cache_key = func_campo.__name__ + str(limites)
-        print(f"  [{i + 1}/{total}] Extraindo malha: {label}")
-        if cache_key not in cache_malhas:
-            kwargs = {"limites": limites, "resolucao": RESOLUCAO_MARCHING_CUBES} if limites else {"resolucao": RESOLUCAO_MARCHING_CUBES}
-            cache_malhas[cache_key] = modeling.extrair_malha(func_campo, **kwargs)
+    for i, (nome, *_resto) in enumerate(CENA):
+        print(f"  [{i + 1}/{total}] Criando sólido: {nome}")
+        solidos[nome] = modeling.obter_solido(nome, RESOLUCAO_MARCHING_CUBES)
 
     # Matrizes de câmera e projeção para cada viewport
     view_principal = math_3d.look_at(eye=EYE_PRINCIPAL, at=AT, up=UP)
@@ -314,7 +307,7 @@ def main():
         print(f"  Rasterizando {res}×{res}...")
         img = renderizar_cena_completa(
             res, view_principal, proj_principal,
-            cache_malhas, EYE_PRINCIPAL, POSICAO_LUZ
+            solidos, EYE_PRINCIPAL, POSICAO_LUZ
         )
         ax.imshow(img)
         ax.set_title(f"Resolução: {res} × {res}", fontsize=11, fontweight='bold', color='#2c3e50')
@@ -328,7 +321,7 @@ def main():
     print("\n  Rasterizando viewport externa 800×800...")
     img_blender = renderizar_cena_completa(
         800, view_blender, proj_blender,
-        cache_malhas, EYE_BLENDER, POSICAO_LUZ,
+        solidos, EYE_BLENDER, POSICAO_LUZ,
         modo_blender=True
     )
 

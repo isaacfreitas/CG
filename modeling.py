@@ -23,6 +23,68 @@ def extrair_malha(funcao_campo, limites=(-5, 12), resolucao=100):
 
 
 # ==============================================================================
+# SÓLIDO COMPLETO — item 1 do enunciado
+# ==============================================================================
+
+def criar_solido(funcao_campo, nome, cor, limites=(-5, 12), resolucao=80):
+    """
+    Constrói o sólido completo a partir da sua função de campo F(x, y, z).
+
+    Retorna um dicionário com:
+      nome             : nome do objeto
+      cor              : cor RGB em [0, 1] (faces e arestas usam a mesma cor)
+      vertices         : matriz (V, 3) com as coordenadas x, y, z de cada vértice
+      arestas          : matriz (A, 2) com os pares de índices de vértices (sem repetição)
+      faces            : matriz (F, 3) com os 3 índices de vértices de cada triângulo
+      normais_faces    : matriz (F, 3) com a normal unitária de cada face, para fora
+      normais_vertices : matriz (V, 3) com a normal unitária de cada vértice, para fora
+
+    Tudo está no sistema de coordenadas do objeto.
+    """
+    vertices, faces, normais_v = extrair_malha(funcao_campo, limites, resolucao)
+    faces = faces.astype(np.int64)
+
+    # O scikit-image calcula a normal pelo gradiente no sentido em que F diminui,
+    # ou seja, para dentro do sólido (F < 0). Invertendo o sinal, ela aponta para fora.
+    normais_v = -normais_v
+    normais_v /= np.linalg.norm(normais_v, axis=1, keepdims=True) + 1e-12
+
+    # Normal de cada face: produto vetorial de duas arestas do triângulo.
+    a, b, c = vertices[faces[:, 0]], vertices[faces[:, 1]], vertices[faces[:, 2]]
+    normais_f = np.cross(b - a, c - a)
+    normais_f /= np.linalg.norm(normais_f, axis=1, keepdims=True) + 1e-12
+
+    # Garante que a normal da face aponte para fora: compara com a média das normais
+    # dos seus 3 vértices. Se estiver ao contrário, inverte a normal e a ordem dos
+    # vértices (a ordem define o sentido do produto vetorial, usado no back-face culling).
+    media_v = normais_v[faces].mean(axis=1)
+    inverter = np.sum(normais_f * media_v, axis=1) < 0
+    normais_f[inverter] *= -1
+    faces[inverter] = faces[inverter][:, [0, 2, 1]]
+
+    # Arestas: cada triângulo tem 3 (v0-v1, v1-v2, v2-v0). Uma aresta é compartilhada
+    # por 2 triângulos, então ordenamos cada par e removemos as repetidas.
+    todas = np.vstack([faces[:, [0, 1]], faces[:, [1, 2]], faces[:, [2, 0]]])
+    arestas = np.unique(np.sort(todas, axis=1), axis=0)
+
+    return {
+        "nome": nome,
+        "cor": np.asarray(cor, dtype=float),
+        "vertices": vertices,
+        "arestas": arestas,
+        "faces": faces,
+        "normais_faces": normais_f,
+        "normais_vertices": normais_v,
+    }
+
+
+def hex_para_rgb(hex_str):
+    """Converte '#RRGGBB' em [r, g, b] com valores em [0, 1]."""
+    hex_str = hex_str.lstrip('#')
+    return [int(hex_str[i:i + 2], 16) / 255.0 for i in (0, 2, 4)]
+
+
+# ==============================================================================
 # PEÇAS — usando primitives.py
 # ==============================================================================
 
@@ -124,3 +186,23 @@ def gerar_campo_lixeira(x, y, z):
                  r_maior=R_TOPO - ESPESSURA / 2, r_tubo=0.14)
 
     return uniao(corpo, borda)
+
+
+# ==============================================================================
+# CATÁLOGO DOS 5 OBJETOS
+# ==============================================================================
+# nome -> (função de campo, limites da grade do Marching Cubes, cor)
+# Os limites são o cubo [min, max]^3 onde F é avaliada; precisam envolver o objeto inteiro.
+MODELOS = {
+    "Peão":    (gerar_campo_peao,    (-2.5, 5.5), "#E63946"),
+    "Lápis":   (gerar_campo_lapis,   (-1.5, 8.0), "#F4A261"),
+    "Altere":  (gerar_campo_altere,  (-3.5, 3.5), "#2A9D8F"),
+    "Martelo": (gerar_campo_martelo, (-2.0, 6.0), "#A8DADC"),
+    "Lixeira": (gerar_campo_lixeira, (-2.5, 4.5), "#C77DFF"),
+}
+
+
+def obter_solido(nome, resolucao=80):
+    """Cria o sólido completo de um dos 5 objetos do catálogo pelo nome."""
+    funcao_campo, limites, cor_hex = MODELOS[nome]
+    return criar_solido(funcao_campo, nome, hex_para_rgb(cor_hex), limites, resolucao)

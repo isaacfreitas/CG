@@ -20,7 +20,7 @@ imagem final rasterizada) e alguns ajustes pontuais exigidos pelo enunciado.
 
 | Item do enunciado | Status | Resumo |
 |---|---|---|
-| 1 – Modelagem dos 5 objetos | 🟡 Parcial | Objetos prontos; falta a função que retorna o sólido completo e o plot de cada um no seu sistema |
+| 1 – Modelagem dos 5 objetos | 🟢 Pronto | `modeling.criar_solido` retorna o sólido completo; `visualizar_objetos.py` mostra cada um no seu sistema |
 | 2 – Cena no mundo | 🟡 Parcial | Cena montada e validada; falta usar rotação/escala de fato, `rotacao_x/z` e plot 3D do mundo |
 | 3 – Sistema da câmera | 🟡 Parcial | `look_at` calcula a base; falta exibir a base, plotar em coordenadas da câmera e marcar a origem corretamente |
 | 4 – Projeção perspectiva | 🟡 Parcial | Matemática pronta; falta recorte pelo volume de visão, plot 3D + janela de projeção, arestas na cor do sólido |
@@ -54,7 +54,8 @@ Saída:
 | Arquivo | Responsabilidade | Status |
 |---|---|---|
 | `primitives.py` | Formas implícitas F(x,y,z) (F<0 dentro) e operações CSG | Pronto (+ `cilindro_x` novo) |
-| `modeling.py` | `extrair_malha` (Marching Cubes) + os 5 objetos | Pronto |
+| `modeling.py` | `extrair_malha` (Marching Cubes), os 5 objetos, `criar_solido`/`obter_solido` e o catálogo `MODELOS` (limites e cor) | Pronto |
+| `visualizar_objetos.py` | Item 1e: plot 3D de cada sólido no sistema do objeto (`--salvar` grava as figuras do relatório) | Pronto |
 | `math_3d.py` | Matrizes 4×4: translação, escala, rotação Y, look-at, perspectiva | Falta `rotacao_x`, `rotacao_z`, `base_camera` |
 | `illumination.py` | Modelo de Phong por vértice | Pronto |
 | `rasterizer.py` | Bresenham, área, baricêntricas, scan-line par-ímpar | Pronto |
@@ -197,10 +198,10 @@ Verificações feitas (resolução 80):
 ## 5. O que falta fazer (checklist)
 
 ### Item 1 — Modelagem
-- [ ] **Função que retorna o sólido** completo (exigência explícita): vértices, **arestas**,
+- [x] **Função que retorna o sólido** completo (exigência explícita): vértices, **arestas**,
       faces, normais por face e por vértice, cor. Proposta pronta em
       `Documentacao_Projeto_CG.pdf`, seção 6.2 (`criar_solido`).
-- [ ] **Mostrar cada sólido no seu sistema do objeto** (item 1e): plot 3D (matplotlib
+- [x] **Mostrar cada sólido no seu sistema do objeto** (item 1e): plot 3D (matplotlib
       `Poly3DCollection`) com eixos do objeto e setas das normais (`quiver`) nos centroides.
 - [ ] Confirmar com o professor se os 5 objetos são únicos na turma (o haltere aparece como
       sugestão na documentação de apoio, então outras equipes podem ter escolhido também).
