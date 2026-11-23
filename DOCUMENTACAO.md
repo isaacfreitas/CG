@@ -45,7 +45,7 @@ python3 visualizar_projecao.py --eye 26 18 28 # sólidos 3D + janela de projeç�
 
 Saída do `main.py`:
 - **Terminal:** o eye e a base da câmera principal (`u`, `v`, `n`).
-- **Tela 1:** a cena pela câmera principal (padrão `EYE_PRINCIPAL = (7.5, 10, 5)`, ou o valor de
+- **Tela 1:** a cena pela câmera principal (padrão `EYE_PRINCIPAL = (9.75, 13, 6.5)`, ou o valor de
   `--eye`) em 200, 400 e 800 px.
 - **Tela 2:** vista externa "modo Blender" (`EYE_BLENDER = (26, 18, 28)`) em 800 px, com a
   gaiola da cena.
@@ -270,8 +270,9 @@ Verificações feitas (resolução 80):
 - [ ] Confirmar no livro-texto se a subseção 5.2.1 é Bresenham (o que está implementado).
 
 ### Ajustes de cena / qualidade
-- [ ] A **lixeira sai cortada** na borda direita da câmera principal (Tela 1). Aproximar do
-      centro ou recuar o `EYE_PRINCIPAL`.
+- [x] A **lixeira saía cortada** na borda direita da câmera principal (Tela 1). Resolvido
+      recuando o `EYE_PRINCIPAL` de (7.5, 10, 5) para (9.75, 13, 6.5), na mesma direção de
+      visada (a base u, v, n não muda). Maior |NDC| de qualquer vértice: de 1.18 para 0.87.
 - [ ] Salvar as imagens com `plt.savefig` para o relatório.
 
 ### Entrega

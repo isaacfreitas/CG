@@ -14,7 +14,7 @@ import cena
 RESOLUCAO_MARCHING_CUBES = 80               # Qualidade da malha: maior = mais detalhe, mais lento
 RESOLUCOES_TELA          = [200, 400, 800]  # Resoluções comparadas na Tela 1
 
-EYE_PRINCIPAL = np.array([7.5,  10.0,  5.0])   # Câmera da Tela 1 (visão frontal)
+EYE_PRINCIPAL = np.array([9.75, 13.0,  6.5])   # Câmera da Tela 1 (visão frontal)
 EYE_BLENDER   = np.array([26.0, 18.0, 28.0])   # Câmera da Tela 2 (visão oblíqua)
 AT            = np.array([0.0,   0.0,  0.0])   # Ponto para onde as câmeras apontam
 UP            = np.array([0.0,   1.0,  0.0])   # Vetor "cima" do mundo
@@ -275,7 +275,7 @@ def ler_argumentos():
     parser = argparse.ArgumentParser(description="Pipeline gráfico da Tela 1 e da Tela 2")
     parser.add_argument("--eye", nargs=3, type=float, metavar=("X", "Y", "Z"),
                         default=EYE_PRINCIPAL.tolist(),
-                        help="posição do observador na Tela 1 (padrão: 7.5 10 5)")
+                        help="posição do observador na Tela 1 (padrão: 9.75 13 6.5)")
     return parser.parse_args()
 
 
