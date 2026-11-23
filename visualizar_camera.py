@@ -44,6 +44,7 @@ def ler_argumentos():
 
 
 def desenhar_cena_na_camera(eye, ax):
+    """Desenha a cena em coordenadas de câmera e devolve [(sólido, vértices na câmera)]."""
     # 3a: base da câmera
     u, v, n = math_3d.base_camera(eye, AT, UP)
     print(f"eye = {eye}")
@@ -53,6 +54,7 @@ def desenhar_cena_na_camera(eye, ax):
 
     view = math_3d.look_at(eye, AT, UP)
     todos_os_pontos = [np.zeros((1, 3))]  # o centro da câmera também precisa caber no gráfico
+    objetos_na_camera = []
 
     # 3b e 3c: vértices do mundo -> câmera (cena.montar_cena já leva objeto -> mundo)
     solidos = {item["nome"]: modeling.obter_solido(item["nome"], RESOLUCAO) for item in cena.CENA}
@@ -60,6 +62,7 @@ def desenhar_cena_na_camera(eye, ax):
         solido = obj["solido"]
         vertices = math_3d.aplicar_transformacao(view, obj["vertices_mundo"])
         todos_os_pontos.append(vertices)
+        objetos_na_camera.append((solido, vertices))
 
         cor = solido["cor"]
         triangulos = para_plot(vertices[solido["faces"]])
@@ -96,6 +99,7 @@ def desenhar_cena_na_camera(eye, ax):
     ax.set_ylabel("z da câmera")
     ax.set_zlabel("y da câmera")
     ax.view_init(elev=ELEVACAO, azim=AZIMUTE)
+    return objetos_na_camera
 
 
 def main():
