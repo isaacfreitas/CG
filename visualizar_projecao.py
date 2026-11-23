@@ -6,6 +6,7 @@ Mostra a projeção em perspectiva em dois painéis:
     projeção (um quadrado no plano z = -D da câmera) e os polígonos visíveis projetados nela;
   - 2D: a mesma janela vista de frente, só com os polígonos projetados.
 Só entram na projeção os polígonos dentro do volume de visão e voltados para a câmera.
+Uma reta pontilhada liga o eye ao centro de cada sólido e cruza a janela no ponto projetado.
 
 Uso:
     python3 visualizar_projecao.py                          # eye padrão, abre a janela
@@ -40,7 +41,7 @@ def ler_argumentos():
 
 
 def desenhar_projecao(eye, ax, ax_janela):
-    objetos = desenhar_cena_na_camera(eye, ax)
+    objetos = desenhar_cena_na_camera(eye, ax, mostrar_volume=False)
     proj = math_3d.projecao_perspectiva(FOV_PRINCIPAL, 1.0, Z_NEAR, Z_FAR)
 
     # A distância da janela acompanha a do eye ao at; com distância fixa, a projeção
@@ -80,6 +81,18 @@ def desenhar_projecao(eye, ax, ax_janela):
                                              edgecolor=cor, linewidths=0.1, zorder=3 + ordem))
         ax_janela.add_collection(PolyCollection(triangulos_2d, facecolor=cor, edgecolor=cor,
                                                 linewidths=0.1))
+
+        # Reta de projeção: do eye (origem da câmera) até o centro do sólido. Ela cruza o plano
+        # da janela (z = -distancia) num ponto. Pela semelhança de triângulos,
+        # x' = x · distancia / (-z), e o mesmo vale para y.
+        x, y, z = (vertices.min(axis=0) + vertices.max(axis=0)) / 2
+        if z < -Z_NEAR:      # atrás do plano near: não é projetado
+            fator = distancia / -z
+            na_janela = np.array([x * fator, y * fator, -distancia])
+            reta = para_plot(np.array([[0.0, 0.0, 0.0], [x, y, z]]))
+            ax.plot(reta[:, 0], reta[:, 1], reta[:, 2], color=cor, linestyle=":",
+                    linewidth=1.2, zorder=10)
+            ax.scatter(*para_plot(na_janela), color=cor, edgecolor="black", s=25, zorder=11)
 
     # Contorno da janela de projeção no painel 3D
     cantos = np.array([[-1, -1], [1, -1], [1, 1], [-1, 1], [-1, -1]]) * meia_janela

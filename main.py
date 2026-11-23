@@ -1,4 +1,5 @@
 import argparse
+from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,6 +16,7 @@ from cena import (EYE_PRINCIPAL, EYE_BLENDER, AT, UP, FOV_PRINCIPAL,
 RESOLUCAO_MARCHING_CUBES = 80               # Qualidade da malha: maior = mais detalhe, mais lento
 RESOLUCOES_TELA          = [200, 400, 800]  # Resoluções comparadas na Tela 1
 Z_BIAS                   = 0.005            # Tolerância do Z-buffer para evitar z-fighting
+PASTA_FIGURAS            = Path(__file__).parent / "relatorio/figuras/04-simulacoes"
 
 # A cena, as câmeras e a luz ficam em cena.py.
 
@@ -33,32 +35,6 @@ def projetar(p_mundo, view_matrix, proj_matrix):
     """Leva um ponto do mundo até o NDC: câmera (view), projeção e divisão por w."""
     v_camera = view_matrix @ np.append(p_mundo, 1.0)
     return math_3d.divisao_perspectiva(proj_matrix @ v_camera)
-
-
-def calcular_posicao_tela_rotulo(p_mundo, view_matrix, proj_matrix, res):
-    """Projeta um ponto 3D do mundo para pixel 2D (usado nos ticks do grid)."""
-    v_ndc = projetar(p_mundo, view_matrix, proj_matrix)
-    if abs(v_ndc[0]) > 1.0 or abs(v_ndc[1]) > 1.0:
-        return None
-    return ndc_para_pixel(v_ndc, res)
-
-
-def desenhar_ticks(ax, view_matrix, proj_matrix, res):
-    """Desenha os rótulos numéricos do grid nos eixos X e Z."""
-    escala_fonte = max(6, int(res * 0.02))
-    offset       = res * 0.04
-
-    for val in [-15, -10, -5, 0, 5, 10, 15]:
-        pos = calcular_posicao_tela_rotulo([val, -2.0, 10.0], view_matrix, proj_matrix, res)
-        if pos:
-            ax.text(pos[0], pos[1] + offset, str(val), color='#7f8c8d',
-                    fontsize=escala_fonte, ha='center', va='top', weight='bold')
-
-    for val in [-10, -5, 0, 5, 10]:
-        pos = calcular_posicao_tela_rotulo([-15.0, -2.0, val], view_matrix, proj_matrix, res)
-        if pos:
-            ax.text(pos[0] - offset, pos[1], str(val), color='#7f8c8d',
-                    fontsize=escala_fonte, ha='right', va='center', weight='bold')
 
 
 def desenhar_reta_3d_no_zbuffer(p1_mundo, p2_mundo, cor, imagem, z_buffer, view_matrix, proj_matrix, res):
@@ -118,39 +94,14 @@ def desenhar_origem_mundo(imagem, z_buffer, view_matrix, proj_matrix, res):
                                     imagem, z_buffer, view_matrix, proj_matrix, res)
 
 
-def desenhar_caixa_proporcao_mundo(imagem, z_buffer, view_matrix, proj_matrix, res):
-    """Desenha o grid de chão e a gaiola cúbica delimitando o espaço da cena."""
-    COR_CAIXA = [205, 215, 228]
-    COR_GRADE = [234, 240, 246]
-    X_MIN, X_MAX = -10.0, 10.0
-    Z_MIN, Z_MAX = -10.0, 10.0
-    Y_CHAO, Y_TETO = -2.0, 7.0
-
-    def reta(p1, p2, cor):
-        desenhar_reta_3d_no_zbuffer(p1, p2, cor, imagem, z_buffer, view_matrix, proj_matrix, res)
-
-    # Grade de chão (a cada 5 unidades)
-    for gx in np.arange(X_MIN, X_MAX + 1.0, 5.0):
-        reta([gx, Y_CHAO, Z_MIN], [gx, Y_CHAO, Z_MAX], COR_GRADE)
-    for gz in np.arange(Z_MIN, Z_MAX + 1.0, 5.0):
-        reta([X_MIN, Y_CHAO, gz], [X_MAX, Y_CHAO, gz], COR_GRADE)
-
-    # Gaiola cúbica (12 arestas)
-    for p1, p2 in [
-        ([X_MIN, Y_CHAO, Z_MIN], [X_MAX, Y_CHAO, Z_MIN]),
-        ([X_MIN, Y_CHAO, Z_MAX], [X_MAX, Y_CHAO, Z_MAX]),
-        ([X_MIN, Y_CHAO, Z_MIN], [X_MIN, Y_CHAO, Z_MAX]),
-        ([X_MAX, Y_CHAO, Z_MIN], [X_MAX, Y_CHAO, Z_MAX]),
-        ([X_MIN, Y_CHAO, Z_MIN], [X_MIN, Y_TETO, Z_MIN]),
-        ([X_MAX, Y_CHAO, Z_MIN], [X_MAX, Y_TETO, Z_MIN]),
-        ([X_MIN, Y_CHAO, Z_MAX], [X_MIN, Y_TETO, Z_MAX]),
-        ([X_MAX, Y_CHAO, Z_MAX], [X_MAX, Y_TETO, Z_MAX]),
-        ([X_MIN, Y_TETO, Z_MIN], [X_MAX, Y_TETO, Z_MIN]),
-        ([X_MIN, Y_TETO, Z_MAX], [X_MAX, Y_TETO, Z_MAX]),
-        ([X_MIN, Y_TETO, Z_MIN], [X_MIN, Y_TETO, Z_MAX]),
-        ([X_MAX, Y_TETO, Z_MIN], [X_MAX, Y_TETO, Z_MAX]),
-    ]:
-        reta(p1, p2, COR_CAIXA)
+def desenhar_grade_chao(imagem, z_buffer, view_matrix, proj_matrix, res):
+    """Desenha a grade do chão (y = Y_CHAO) entre -10 e 10, com uma linha a cada 5 unidades."""
+    COR_GRADE = [205, 215, 228]
+    L, y = cena.LIMITE, cena.Y_CHAO
+    for g in np.arange(-L, L + 1.0, 5.0):
+        for p1, p2 in (([g, y, -L], [g, y, L]), ([-L, y, g], [L, y, g])):
+            desenhar_reta_3d_no_zbuffer(p1, p2, COR_GRADE, imagem, z_buffer,
+                                        view_matrix, proj_matrix, res)
 
 
 # ==============================================================================
@@ -159,7 +110,8 @@ def desenhar_caixa_proporcao_mundo(imagem, z_buffer, view_matrix, proj_matrix, r
 def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_cena,
                              posicao_camera, posicao_luz):
     """
-    Renderiza a cena completa em uma imagem NumPy (H x W x 3).
+    Renderiza a cena completa. Devolve a imagem NumPy (H x W x 3) e a contagem de faces:
+    total, fora_do_volume (estágio 2), de_costas (estágio 3) e desenhadas.
 
     Estágios por face:
       1. Transformação dos vértices/normais para o espaço do mundo
@@ -175,7 +127,10 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
     # Z-buffer (extra, não visto em aula): guarda a profundidade do que já foi pintado em cada pixel.
     z_buffer = np.full((resolucao_tela, resolucao_tela), np.inf)
 
-    desenhar_caixa_proporcao_mundo(imagem, z_buffer, view_matrix, proj_matrix, resolucao_tela)
+    desenhar_grade_chao(imagem, z_buffer, view_matrix, proj_matrix, resolucao_tela)
+
+    # Quantas faces cada estágio descartou ou desenhou (aparece no título da imagem)
+    total = fora_do_volume = de_costas = desenhadas = 0
 
     for obj in objetos_cena:
         solido   = obj["solido"]
@@ -212,14 +167,19 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
             vertices_tela.append(ndc_para_pixel(v_ndc, resolucao_tela))
 
         for i_face, face in enumerate(faces):
+            total += 1
+
             # Estágio 2: Recorte — descarta faces atrás do near ou fora do volume de visão
             if not math_3d.face_no_volume_de_visao(*(vertices_clip[i] for i in face)):
+                fora_do_volume += 1
                 continue
 
             # Estágio 3: Back-face culling — normal da face e vetor até o observador (câmera)
             if not math_3d.face_voltada_para_camera(normais_faces_camera[i_face],
                                                     vertices_camera[face[0]]):
+                de_costas += 1
                 continue
+            desenhadas += 1
 
             # Estágio 4: Phong nos 3 vértices (Gouraud shading). Um vértice é compartilhado
             # por vários triângulos, então a cor dele é calculada uma única vez.
@@ -267,7 +227,9 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
 
     desenhar_origem_mundo(imagem, z_buffer, view_matrix, proj_matrix, resolucao_tela)
 
-    return imagem
+    contagem = {"total": total, "fora_do_volume": fora_do_volume,
+                "de_costas": de_costas, "desenhadas": desenhadas}
+    return imagem, contagem
 
 
 # ==============================================================================
@@ -279,13 +241,25 @@ def ler_argumentos():
     parser.add_argument("--eye", nargs=3, type=float, metavar=("X", "Y", "Z"),
                         default=EYE_PRINCIPAL.tolist(),
                         help="posição do observador na Tela 1 (padrão: 9.75 13 6.5)")
+    parser.add_argument("--salvar", metavar="NOME",
+                        help="salva as imagens da Tela 1 como NOME-<resolução>.png na pasta "
+                             "de figuras do relatório, sem abrir as janelas")
     return parser.parse_args()
+
+
+def titulo(cabecalho, contagem):
+    """Título da imagem: o cabeçalho e quantas faces cada estágio descartou ou desenhou."""
+    return (f"{cabecalho}\n"
+            f"{contagem['total']} faces: {contagem['desenhadas']} desenhadas\n"
+            f"descartadas: {contagem['fora_do_volume']} fora do volume, "
+            f"{contagem['de_costas']} de costas")
 
 
 def main():
     print("=== PIPELINE CG — MALHAS + PHONG + SCAN-LINE + Z-BUFFER ===")
 
-    eye_principal = np.array(ler_argumentos().eye)
+    args = ler_argumentos()
+    eye_principal = np.array(args.eye)
 
     # Item 3a: base vetorial da câmera principal
     u, v, n = math_3d.base_camera(eye_principal, AT, UP)
@@ -314,21 +288,28 @@ def main():
 
     for ax, res in zip(eixos, RESOLUCOES_TELA):
         print(f"  Rasterizando {res}×{res}...")
-        img = renderizar_cena_completa(
+        img, contagem = renderizar_cena_completa(
             res, view_principal, proj_principal,
             objetos_cena, eye_principal, POSICAO_LUZ
         )
+        if args.salvar:
+            destino = PASTA_FIGURAS / f"{args.salvar}-{res}.png"
+            plt.imsave(destino, img)
+            print(f"  salvo em {destino}")
         ax.imshow(img)
-        ax.set_title(f"Resolução: {res} × {res}", fontsize=11, fontweight='bold', color='#2c3e50')
+        ax.set_title(titulo(f"Resolução: {res} × {res}", contagem),
+                     fontsize=9, fontweight='bold', color='#2c3e50')
         ax.axis('off')
-        desenhar_ticks(ax, view_principal, proj_principal, res)
+
+    if args.salvar:
+        return
 
     plt.tight_layout()
     plt.show(block=False)
 
-    # Tela 2: viewport oblíqua estilo Blender com origem e pirâmide da câmera
+    # Tela 2: segunda posição do eye (item 3e), vista oblíqua da cena
     print("\n  Rasterizando viewport externa 800×800...")
-    img_blender = renderizar_cena_completa(
+    img_blender, contagem = renderizar_cena_completa(
         800, view_blender, proj_blender,
         objetos_cena, EYE_BLENDER, POSICAO_LUZ
     )
@@ -336,9 +317,9 @@ def main():
     fig2, ax2 = plt.subplots(figsize=(8, 8))
     fig2.canvas.manager.set_window_title("Tela 2: Viewport Blender")
     ax2.imshow(img_blender)
-    ax2.set_title("Visão Global — Espaço do Mundo", fontsize=12, fontweight='bold', color='#2c3e50')
+    ax2.set_title(titulo(f"Segundo eye = {EYE_BLENDER.tolist()}", contagem),
+                  fontsize=10, fontweight='bold', color='#2c3e50')
     ax2.axis('off')
-    desenhar_ticks(ax2, view_blender, proj_blender, 800)
 
     print("Concluído.")
     plt.tight_layout()

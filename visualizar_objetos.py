@@ -45,7 +45,7 @@ def mostrar_solido(solido, ax):
     # Faces e arestas com a mesma cor do sólido
     triangulos = para_plot(vertices[faces])
     malha = Poly3DCollection(triangulos, facecolor=cor, edgecolor=cor * 0.85,
-                             linewidths=0.1, alpha=0.9)
+                             linewidths=0.1, alpha=0.9, zorder=1)
     ax.add_collection3d(malha)
 
     # Normais: seta saindo do centroide de algumas faces. O matplotlib não esconde o que
@@ -59,7 +59,7 @@ def mostrar_solido(solido, ax):
     normais = solido["normais_faces"][escolhidas]
     c, n = para_plot(centroides), para_plot(normais)
     ax.quiver(c[:, 0], c[:, 1], c[:, 2], n[:, 0], n[:, 1], n[:, 2],
-              length=0.5, color="black", linewidth=0.8, arrow_length_ratio=0.3)
+              length=0.5, color="black", linewidth=0.8, arrow_length_ratio=0.3, zorder=3)
 
     # Mesma escala nos 3 eixos para não deformar o objeto
     minimo, maximo = vertices.min(axis=0), vertices.max(axis=0)
@@ -72,8 +72,8 @@ def mostrar_solido(solido, ax):
                                       ((0, tam, 0), "y", "blue"),
                                       ((0, 0, tam), "z", "green")]:
         d = para_plot(np.array(direcao, dtype=float))
-        ax.plot([0, d[0]], [0, d[1]], [0, d[2]], color=cor_eixo, linewidth=2)
-        ax.text(*(d * 1.08), rotulo, color=cor_eixo, fontsize=12)
+        ax.plot([0, d[0]], [0, d[1]], [0, d[2]], color=cor_eixo, linewidth=2, zorder=5)
+        ax.text(*(d * 1.08), rotulo, color=cor_eixo, fontsize=12, zorder=10)
 
     raio = max(raio, tam - np.abs(centro).max() + 0.3)
     c = para_plot(centro)
@@ -96,7 +96,9 @@ def main():
         print(f"Criando sólido: {nome}")
         solido = modeling.obter_solido(nome, RESOLUCAO)
         fig = plt.figure(figsize=(6, 6))
-        ax = fig.add_subplot(projection="3d")
+        # computed_zorder=False: o matplotlib não faz z-buffer, então fixamos a ordem de
+        # desenho (malha, normais, eixos, rótulos) para os eixos não ficarem escondidos
+        ax = fig.add_subplot(projection="3d", computed_zorder=False)
         mostrar_solido(solido, ax)
         fig.tight_layout()
         if salvar:

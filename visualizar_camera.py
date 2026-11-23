@@ -6,6 +6,7 @@ Mostra a cena no sistema de coordenadas da câmera, em 3D:
   3b. leva todos os vértices do mundo para o sistema da câmera
   3c. desenha os sólidos nesse sistema
   3d. marca a origem do mundo com um ponto preto
+      (também marca o eye, o ponto at e o volume de visão da câmera)
   3e. o eye muda pela linha de comando e gera uma nova imagem
 
 Uso:
@@ -23,7 +24,7 @@ from matplotlib.ticker import FuncFormatter
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 import math_3d
-from cena import EYE_PRINCIPAL, AT, UP
+from cena import EYE_PRINCIPAL, AT, UP, FOV_PRINCIPAL
 import cena
 from visualizar_objetos import para_plot
 
@@ -42,7 +43,32 @@ def ler_argumentos():
     return parser.parse_args()
 
 
-def desenhar_cena_na_camera(eye, ax):
+def desenhar_volume_de_visao(ax, eye):
+    """
+    Desenha o que a câmera enxerga: uma pirâmide com o vértice no eye (origem deste sistema)
+    e a base no plano do ponto at. A câmera olha para -z, então o at fica em (0, 0, -d),
+    com d = |eye - at|. Devolve os pontos desenhados, para o gráfico poder enquadrá-los.
+    """
+    d = np.linalg.norm(np.array(eye) - AT)
+    meia = d * np.tan(np.radians(FOV_PRINCIPAL) / 2)   # metade do lado da base
+    cantos = np.array([[-meia, -meia, -d], [meia, -meia, -d], [meia, meia, -d], [-meia, meia, -d]])
+    at = np.array([0.0, 0.0, -d])
+
+    origem = para_plot(np.zeros(3))
+    for canto in para_plot(cantos):
+        ax.plot(*zip(origem, canto), color="gray", linestyle="--", linewidth=0.8)   # arestas
+    base = para_plot(np.vstack([cantos, cantos[:1]]))                              # base fechada
+    ax.plot(base[:, 0], base[:, 1], base[:, 2], color="gray", linestyle="--", linewidth=0.8)
+
+    # Direção de visada: do eye até o at
+    ax.plot(*zip(origem, para_plot(at)), color="black", linestyle=":", linewidth=1)
+    ax.scatter(*para_plot(at), color="black", marker="x", s=40)
+    # Acima do ponto: o at coincide com a origem do mundo, cujo rótulo fica abaixo
+    ax.text(*para_plot(at), "  at (ponto visado)", fontsize=9, va="bottom")
+    return np.vstack([cantos, at])
+
+
+def desenhar_cena_na_camera(eye, ax, mostrar_volume=True):
     """Desenha a cena em coordenadas de câmera e devolve [(sólido, vértices na câmera)]."""
     # 3a: base da câmera
     u, v, n = math_3d.base_camera(eye, AT, UP)
@@ -72,7 +98,15 @@ def desenhar_cena_na_camera(eye, ax):
     todos_os_pontos.append(origem)
     o = para_plot(origem[0])
     ax.scatter(*o, color="black", s=40)
-    ax.text(*o, "  origem do mundo", fontsize=9)
+    ax.text(*o, "  origem do mundo", fontsize=9, va="top")
+
+    # O eye é a origem do sistema da câmera, (0, 0, 0)
+    ax.scatter(*para_plot(np.zeros(3)), color="darkorange", s=70, zorder=10)
+    ax.text(*para_plot(np.zeros(3)), "  eye (câmera)", color="darkorange", fontsize=10)
+
+    # Volume de visão: o que a câmera enxerga, da posição dela até o ponto at
+    if mostrar_volume:
+        todos_os_pontos.append(desenhar_volume_de_visao(ax, eye))
 
     # Eixos u, v, n saindo do centro da câmera (que é (0, 0, 0) neste sistema)
     for direcao, rotulo, cor_eixo in [((1, 0, 0), "u (x)", "red"),

@@ -25,16 +25,29 @@ RESOLUCAO = 50   # grade do Marching Cubes (baixa, só para o plot ficar leve)
 ARQUIVO = Path(__file__).parent / "relatorio/figuras/03-desenvolvimento/02-cena/cena-mundo.png"
 
 
-def desenhar_cubo_limite(ax):
-    """Arestas do cubo [-10, 10]^3: todos os vértices da cena têm de ficar aqui dentro."""
-    L = cena.LIMITE
-    cantos = np.array(list(product([-L, L], repeat=3)))
+def desenhar_caixa(ax, minimo, maximo, **estilo):
+    """Arestas da caixa alinhada aos eixos, entre os cantos minimo e maximo (x, y, z)."""
+    cantos = np.array(list(product(*zip(minimo, maximo))))
     for i, j in product(range(8), repeat=2):
         # dois cantos formam uma aresta quando diferem em exatamente uma coordenada
         if i < j and np.count_nonzero(cantos[i] != cantos[j]) == 1:
             seg = para_plot(cantos[[i, j]])
-            ax.plot(seg[:, 0], seg[:, 1], seg[:, 2], color="0.6", linewidth=0.8,
-                    linestyle="--")
+            ax.plot(seg[:, 0], seg[:, 1], seg[:, 2], **estilo)
+
+
+def desenhar_cubo_limite(ax):
+    """Cubo [-10, 10]^3: todos os vértices da cena têm de ficar aqui dentro."""
+    L = cena.LIMITE
+    desenhar_caixa(ax, [-L] * 3, [L] * 3, color="0.6", linewidth=0.8, linestyle="--")
+
+
+def desenhar_chao(ax):
+    """Plano do chão (y = Y_CHAO), onde os objetos ficam apoiados."""
+    L, y = cena.LIMITE, cena.Y_CHAO
+    cantos = np.array([[-L, y, -L], [L, y, -L], [L, y, L], [-L, y, L]])
+    ax.add_collection3d(Poly3DCollection([para_plot(cantos)], facecolor="0.85",
+                                         edgecolor="0.6", alpha=0.35, zorder=0))
+    ax.text(*para_plot([0, y, L]), f"chão (y = {y:g})", ha="center", fontsize=9, zorder=10)
 
 
 def desenhar_eixos_mundo(ax, tamanho=9.0):
@@ -55,10 +68,14 @@ def mostrar_cena(objetos_cena, ax):
             triangulos, facecolor=solido["cor"], edgecolor=solido["cor"] * 0.85,
             linewidths=0.2, zorder=1))
         v = obj["vertices_mundo"]
+        # Caixa do objeto: a mesma que validar_cena usa. Caixas que não se tocam = sem sobreposição
+        desenhar_caixa(ax, v.min(axis=0), v.max(axis=0), color=solido["cor"], linewidth=0.8,
+                       linestyle=":", zorder=2)
         rotulo = np.array([v[:, 0].mean(), v[:, 1].max() + 1.0, v[:, 2].mean()])
         ax.text(*para_plot(rotulo), obj["nome"], fontsize=10, ha="center", zorder=10,
                 bbox=dict(facecolor="white", edgecolor="none", alpha=0.7, pad=1))
 
+    desenhar_chao(ax)
     desenhar_cubo_limite(ax)
     desenhar_eixos_mundo(ax)
 
@@ -69,7 +86,8 @@ def mostrar_cena(objetos_cena, ax):
     # O 2º eixo do gráfico guarda -z; o rótulo mostra o valor de z de verdade.
     ax.yaxis.set_major_formatter(FuncFormatter(lambda valor, _: f"{-valor + 0.0:g}"))
     ax.set_title("Cena no sistema de coordenadas do mundo\n"
-                 "ponto preto: origem do mundo   tracejado: limite |10|")
+                 "ponto preto: origem do mundo   tracejado: limite |10|\n"
+                 "pontilhado colorido: caixa de cada objeto (não se tocam)")
     ax.view_init(elev=25, azim=-60)
 
 
