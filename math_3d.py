@@ -158,3 +158,26 @@ def divisao_perspectiva(vertice_4d):
     if vertice_4d[3] != 0:
         return vertice_4d[:3] / vertice_4d[3]
     return vertice_4d[:3]
+
+
+def face_no_volume_de_visao(clip_a, clip_b, clip_c):
+    """
+    Diz se um triângulo pode aparecer na imagem (True) ou deve ser descartado (False).
+    Recebe os 3 vértices em coordenadas de recorte (x, y, z, w), antes da divisão por w.
+    Nessas coordenadas, um ponto está dentro do volume de visão quando
+    -w <= x, y, z <= w; cada desigualdade é um dos 6 planos do frustum.
+
+    Descarta o triângulo inteiro (não há recorte de polígonos) quando:
+      1. Algum vértice está atrás do near (z < -w). Depois da divisão por w, esse
+         vértice cairia do lado errado da câmera e deformaria o triângulo.
+      2. Os 3 vértices estão fora do mesmo plano (esquerda, direita, baixo, cima ou far).
+         Se estivessem em planos diferentes, o triângulo ainda poderia cruzar a tela.
+    """
+    x, y, z, w = np.array([clip_a, clip_b, clip_c]).T
+
+    if np.any(z < -w):
+        return False
+    for coordenada in (x, y):
+        if np.all(coordenada < -w) or np.all(coordenada > w):
+            return False
+    return not np.all(z > w)

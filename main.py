@@ -19,6 +19,10 @@ EYE_BLENDER   = np.array([26.0, 18.0, 28.0])   # Câmera da Tela 2 (visão oblí
 AT            = np.array([0.0,   0.0,  0.0])   # Ponto para onde as câmeras apontam
 UP            = np.array([0.0,   1.0,  0.0])   # Vetor "cima" do mundo
 
+FOV_PRINCIPAL = 58       # Abertura vertical (graus) da câmera da Tela 1
+Z_NEAR        = 0.1      # Plano próximo do volume de visão
+Z_FAR         = 100.0    # Plano distante do volume de visão
+
 POSICAO_LUZ   = np.array([5.0, 20.0, 15.0])    # Posição da fonte de luz no espaço do mundo
 Z_BIAS        = 0.005                           # Tolerância do Z-buffer para evitar z-fighting
 
@@ -146,11 +150,12 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
 
     Estágios por face:
       1. Transformação dos vértices/normais para o espaço do mundo
-      2. Back-face culling
-      3. Iluminação de Phong nos 3 vértices
-      4. Scan-line par-ímpar → pixels internos do triângulo
-      5. Interpolação baricêntrica de cor e profundidade Z
-      6. Z-buffer → escreve o pixel mais próximo
+      2. Recorte pelo volume de visão (near, far e laterais)
+      3. Back-face culling
+      4. Iluminação de Phong nos 3 vértices
+      5. Scan-line par-ímpar → pixels internos do triângulo
+      6. Interpolação baricêntrica de cor e profundidade Z
+      7. Z-buffer → escreve o pixel mais próximo
     """
     imagem   = np.full((resolucao_tela, resolucao_tela, 3), 245, dtype=np.uint8)
     z_buffer = np.full((resolucao_tela, resolucao_tela), np.inf)
@@ -167,23 +172,30 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
         vertices_mundo = obj["vertices_mundo"]
         normais_mundo  = solido["normais_vertices"] @ math_3d.matriz_normal(obj["matriz"]).T
 
+        vertices_clip   = []
         vertices_tela   = []
         profundidades_z = []
         for v in vertices_mundo:
             v_mundo = np.append(v, 1.0)
-            v_ndc = math_3d.divisao_perspectiva(proj_matrix @ (view_matrix @ v_mundo))
+            v_clip = proj_matrix @ (view_matrix @ v_mundo)
+            v_ndc = math_3d.divisao_perspectiva(v_clip)
+            vertices_clip.append(v_clip)
             profundidades_z.append(v_ndc[2])
             vertices_tela.append(ndc_para_pixel(v_ndc, resolucao_tela))
 
         for face in faces:
+            # Estágio 2: Recorte — descarta faces atrás do near ou fora do volume de visão
+            if not math_3d.face_no_volume_de_visao(*(vertices_clip[i] for i in face)):
+                continue
+
             v0, v1, v2 = vertices_mundo[face[0]], vertices_mundo[face[1]], vertices_mundo[face[2]]
 
-            # Estágio 2: Back-face culling — descarta faces voltadas para longe da câmera
+            # Estágio 3: Back-face culling — descarta faces voltadas para longe da câmera
             normal_face = np.cross(v1 - v0, v2 - v0)
             if np.dot(normal_face, posicao_camera - v0) <= 0:
                 continue
 
-            # Estágio 3: Phong nos 3 vértices (Gouraud shading)
+            # Estágio 4: Phong nos 3 vértices (Gouraud shading)
             cores_vertices = [
                 illumination.calcular_iluminacao_phong(
                     vertice_mundo=vertices_mundo[v_idx],
@@ -200,12 +212,12 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
             pA, pB, pC = vertices_tela[face[0]], vertices_tela[face[1]], vertices_tela[face[2]]
             zA, zB, zC = profundidades_z[face[0]], profundidades_z[face[1]], profundidades_z[face[2]]
 
-            # Estágio 4: Scan-line par-ímpar → lista de pixels internos
+            # Estágio 5: Scan-line par-ímpar → lista de pixels internos
             pixels = rasterizer.scan_line_par_impar(
                 [pA, pB, pC], largura_tela=resolucao_tela, altura_tela=resolucao_tela
             )
 
-            # Estágios 5–6: baricêntrica + Z-buffer por pixel
+            # Estágios 6–7: baricêntrica + Z-buffer por pixel
             for (x, y) in pixels:
                 alpha, beta, gamma = rasterizer.coordenadas_baricentricas(
                     x, y, pA[0], pA[1], pB[0], pB[1], pC[0], pC[1]
@@ -263,8 +275,8 @@ def main():
     # Matrizes de câmera e projeção para cada viewport
     view_principal = math_3d.look_at(eye=eye_principal, at=AT, up=UP)
     view_blender   = math_3d.look_at(eye=EYE_BLENDER,   at=AT, up=UP)
-    proj_principal = math_3d.projecao_perspectiva(fov_graus=58, aspecto=1.0, z_near=0.1, z_far=100)
-    proj_blender   = math_3d.projecao_perspectiva(fov_graus=50, aspecto=1.0, z_near=0.1, z_far=100)
+    proj_principal = math_3d.projecao_perspectiva(fov_graus=FOV_PRINCIPAL, aspecto=1.0, z_near=Z_NEAR, z_far=Z_FAR)
+    proj_blender   = math_3d.projecao_perspectiva(fov_graus=50, aspecto=1.0, z_near=Z_NEAR, z_far=Z_FAR)
 
     # Tela 1: comparativo das 3 resoluções
     fig1, eixos = plt.subplots(1, 3, figsize=(18, 6))
