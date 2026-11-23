@@ -23,7 +23,7 @@ imagem final rasterizada) e alguns ajustes pontuais exigidos pelo enunciado.
 | 1 – Modelagem dos 5 objetos | 🟢 Pronto | `modeling.criar_solido` retorna o sólido completo; `visualizar_objetos.py` mostra cada um no seu sistema |
 | 2 – Cena no mundo | 🟢 Pronto | `cena.py`: M = T·Rz·Ry·Rx·S com escala e rotação reais, `validar_cena` automática; `visualizar_cena.py` plota o mundo |
 | 3 – Sistema da câmera | 🟢 Pronto | `math_3d.base_camera` calcula u, v, n; `visualizar_camera.py` plota a cena em coordenadas de câmera; `--eye` troca o observador; origem marcada em (0, 0, 0) |
-| 4 – Projeção perspectiva | 🟡 Parcial | Matemática pronta; falta recorte pelo volume de visão, plot 3D + janela de projeção, arestas na cor do sólido |
+| 4 – Projeção perspectiva | 🟢 Pronto | Recorte pelo volume de visão (`face_no_volume_de_visao`); `visualizar_projecao.py` plota os sólidos e a janela de projeção; arestas com Bresenham na cor do sólido |
 | 5 – Iluminação | 🟢 Pronto | Phong (ambiente + difusa + especular) por vértice |
 | 6 – Rasterização | 🟢 Quase pronto | 3 resoluções, scan-line par-ímpar, baricêntrica, Bresenham, Z-buffer; ajustar o culling para o eixo z da câmera |
 | Relatório (Obs. 1) | 🔴 Falta | Capa, introdução, objetivo, desenvolvimento, simulações, conclusão, referências |
@@ -40,6 +40,7 @@ pip install -r requirements.txt   # numpy, matplotlib, scikit-image
 python3 main.py                        # eye padrão da Tela 1
 python3 main.py --eye 26 18 28         # outro eye na Tela 1 (item 3e)
 python3 visualizar_camera.py --eye 26 18 28   # cena em coordenadas de câmera (item 3)
+python3 visualizar_projecao.py --eye 26 18 28 # sólidos 3D + janela de projeção (item 4a)
 ```
 
 Saída do `main.py`:
@@ -70,6 +71,7 @@ câmera do relatório.
 | `cena.py` | `CENA` (posição, rotação, escala), `montar_cena`, `validar_cena` (limite |10| e sobreposição) | Pronto |
 | `visualizar_cena.py` | Item 2b: plot 3D da cena no mundo com eixos, origem e cubo |10| (`--salvar` grava a figura do relatório) | Pronto |
 | `visualizar_camera.py` | Item 3: plot 3D da cena em coordenadas de câmera, com a origem do mundo e os eixos u, v, n (`--eye`, `--salvar`) | Pronto |
+| `visualizar_projecao.py` | Item 4a: sólidos em coordenadas de câmera, janela de projeção e polígonos visíveis projetados (3D + vista frontal da janela; `--eye`, `--salvar`) | Pronto |
 | `illumination.py` | Modelo de Phong por vértice | Pronto |
 | `rasterizer.py` | Bresenham, área, baricêntricas, scan-line par-ímpar | Pronto |
 | `main.py` | Configuração (`CENA`, câmeras, luz), renderização e exibição | Pronto para o item 6 (`--eye` e origem do mundo incluídos); faltam as visualizações dos itens 2 e 4 |
@@ -81,8 +83,9 @@ câmera do relatório.
 Campo F(x,y,z) ──► Marching Cubes ──► Matriz do mundo (T·R·S) ──► View (look_at)
    (primitives)       (modeling)          (obj → mundo)              (mundo → câmera)
                                                                           │
-Imagem RGB ◄── Z-buffer ◄── Baricêntrica ◄── Scan-line ◄── Phong ◄── Culling ◄── Projeção ÷w
-                                            par-ímpar    por vértice              (→ NDC → pixel)
+Imagem RGB ◄── Z-buffer ◄── Baricêntrica ◄── Scan-line ◄── Phong ◄── Culling ◄── Recorte ◄── Projeção ÷w
+              (+ arestas                     par-ímpar    por vértice                         (→ NDC → pixel)
+               Bresenham)
 ```
 
 1. **Malha (uma vez por objeto):** `extrair_malha` avalia o campo numa grade 80³ e chama
@@ -96,10 +99,13 @@ Imagem RGB ◄── Z-buffer ◄── Baricêntrica ◄── Scan-line ◄─
    `aplicar_transformacao(matriz, pontos)` leva uma lista de pontos (N, 3) de um sistema ao outro.
 4. **Projeção:** `projecao_perspectiva(fov, aspecto, near, far)` + `divisao_perspectiva` → NDC;
    `ndc_para_pixel` → coordenadas da janela.
-5. **Culling:** descarta a face se `normal_face · (eye − v0) ≤ 0`.
-6. **Iluminação:** Phong nos 3 vértices (ka=0.5, kd=0.8, ks=0.4, brilho=32, luz em (5, 20, 15)).
-7. **Rasterização:** `scan_line_par_impar` lista os pixels do triângulo; para cada pixel, as
-   coordenadas baricêntricas interpolam z (teste no Z-buffer) e a cor (Gouraud).
+5. **Recorte:** `face_no_volume_de_visao` descarta a face inteira se algum vértice está atrás
+   do near ou se os 3 estão fora do mesmo plano do frustum (sem recorte de polígonos).
+6. **Culling:** descarta a face se `normal_face · (eye − v0) ≤ 0`.
+7. **Iluminação:** Phong nos 3 vértices (ka=0.5, kd=0.8, ks=0.4, brilho=32, luz em (5, 20, 15)).
+8. **Rasterização:** `scan_line_par_impar` lista os pixels do triângulo; para cada pixel, as
+   coordenadas baricêntricas interpolam z (teste no Z-buffer) e a cor (Gouraud). Depois,
+   `desenhar_aresta` traça as 3 arestas com Bresenham, na cor iluminada dos vértices.
 
 ---
 
@@ -243,12 +249,14 @@ Verificações feitas (resolução 80):
       (as figuras atuais foram feitas por um script que não está no repositório).
 
 ### Item 4 — Projeção
-- [ ] **Recorte pelo volume de visão:** descartar faces atrás do near ou totalmente fora do
-      frustum (hoje não existe).
-- [ ] **Plot 3D com a janela de projeção** (item 4a): no mesmo eixo, os sólidos em
-      coordenadas de câmera e os polígonos visíveis projetados no plano da janela.
-- [ ] **Arestas e faces com a mesma cor** por sólido (desenhar as arestas, p. ex. com
-      Bresenham, na cor do objeto).
+- [x] **Recorte pelo volume de visão:** `math_3d.face_no_volume_de_visao` descarta a face
+      inteira se algum vértice está atrás do near ou se os 3 estão fora do mesmo plano do
+      frustum; é chamada no `main.py` antes do culling.
+- [x] **Plot 3D com a janela de projeção** (item 4a): `visualizar_projecao.py` mostra, no
+      mesmo eixo 3D, os sólidos em coordenadas de câmera e os polígonos visíveis projetados
+      no plano da janela; um segundo painel mostra a janela vista de frente (`--eye`, `--salvar`).
+- [x] **Arestas e faces com a mesma cor** por sólido: `main.desenhar_aresta` desenha as
+      arestas de cada face visível com Bresenham, na cor iluminada do sólido.
 
 ### Item 5 — Iluminação
 - [x] Phong com ambiente, difusa e especular nos vértices visíveis.
@@ -278,6 +286,6 @@ Verificações feitas (resolução 80):
 1. `criar_solido` + plot de cada objeto no seu sistema (item 1).
 2. `rotacao_x/z`, rotação/escala na `CENA`, `validar_cena`, plot do mundo (item 2).
 3. ~~`base_camera`, plot no sistema da câmera com a origem marcada, eye por parâmetro (item 3).~~ Feito.
-4. Recorte + plot 3D com a janela de projeção + arestas na cor do sólido (item 4).
+4. ~~Recorte + plot 3D com a janela de projeção + arestas na cor do sólido (item 4).~~ Feito.
 5. Culling via z da câmera no `renderizar_cena_completa` (item 6).
 6. Gerar as figuras e escrever o relatório.
