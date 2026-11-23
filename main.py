@@ -181,6 +181,7 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
       8. Arestas da face com Bresenham, na cor iluminada dos vértices
     """
     imagem   = np.full((resolucao_tela, resolucao_tela, 3), 245, dtype=np.uint8)
+    # Z-buffer (extra, não visto em aula): guarda a profundidade do que já foi pintado em cada pixel.
     z_buffer = np.full((resolucao_tela, resolucao_tela), np.inf)
 
     desenhar_caixa_proporcao_mundo(imagem, z_buffer, view_matrix, proj_matrix, resolucao_tela)
@@ -253,6 +254,7 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
                 )
                 if alpha >= 0 and beta >= 0 and gamma >= 0:
                     z_pixel = alpha * zA + beta * zB + gamma * zC
+                    # Menor z = mais perto da câmera: só pinta se for mais perto que o já guardado.
                     if z_pixel < z_buffer[y, x]:
                         z_buffer[y, x] = z_pixel
                         cor_pixel = (alpha * cores_vertices[0]
