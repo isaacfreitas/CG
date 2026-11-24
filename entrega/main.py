@@ -1,5 +1,4 @@
 import argparse
-from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,7 +15,6 @@ from cena import (EYE_PRINCIPAL, EYE_BLENDER, AT, UP, FOV_PRINCIPAL,
 RESOLUCAO_MARCHING_CUBES = 80               # Qualidade da malha: maior = mais detalhe, mais lento
 RESOLUCOES_TELA          = [200, 400, 800]  # Resoluções comparadas na Tela 1
 Z_BIAS                   = 0.005            # Tolerância do Z-buffer para evitar z-fighting
-PASTA_FIGURAS            = Path(__file__).parent / "relatorio/figuras/04-simulacoes"
 
 # A cena, as câmeras e a luz ficam em cena.py.
 
@@ -241,9 +239,6 @@ def ler_argumentos():
     parser.add_argument("--eye", nargs=3, type=float, metavar=("X", "Y", "Z"),
                         default=EYE_PRINCIPAL.tolist(),
                         help="posição do observador na Tela 1 (padrão: 9.75 13 6.5)")
-    parser.add_argument("--salvar", metavar="NOME",
-                        help="salva as imagens da Tela 1 como NOME-<resolução>.png na pasta "
-                             "de figuras do relatório, sem abrir as janelas")
     return parser.parse_args()
 
 
@@ -292,17 +287,10 @@ def main():
             res, view_principal, proj_principal,
             objetos_cena, eye_principal, POSICAO_LUZ
         )
-        if args.salvar:
-            destino = PASTA_FIGURAS / f"{args.salvar}-{res}.png"
-            plt.imsave(destino, img)
-            print(f"  salvo em {destino}")
         ax.imshow(img)
         ax.set_title(titulo(f"Resolução: {res} × {res}", contagem),
                      fontsize=9, fontweight='bold', color='#2c3e50')
         ax.axis('off')
-
-    if args.salvar:
-        return
 
     plt.tight_layout()
     plt.show(block=False)

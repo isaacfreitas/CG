@@ -6,12 +6,9 @@ a origem do mundo e o cubo [-10, 10]^3 que limita a cena.
 
 Uso:
     python3 visualizar_cena.py            # abre a janela
-    python3 visualizar_cena.py --salvar   # salva o PNG nas figuras do relatório
 """
 
-import sys
 from itertools import product
-from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -22,7 +19,6 @@ import cena
 from visualizar_objetos import para_plot
 
 RESOLUCAO = 50   # grade do Marching Cubes (baixa, só para o plot ficar leve)
-ARQUIVO = Path(__file__).parent / "relatorio/figuras/03-desenvolvimento/02-cena/cena-mundo.png"
 
 
 def desenhar_caixa(ax, minimo, maximo, **estilo):
@@ -101,12 +97,7 @@ def main():
     ax = fig.add_subplot(projection="3d", computed_zorder=False)
     mostrar_cena(objetos_cena, ax)
     fig.tight_layout()
-
-    if "--salvar" in sys.argv:
-        fig.savefig(ARQUIVO, dpi=150)
-        print(f"salvo em {ARQUIVO}")
-    else:
-        plt.show()
+    plt.show()
 
 
 if __name__ == "__main__":

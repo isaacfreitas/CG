@@ -11,11 +11,9 @@ Uma reta pontilhada liga o eye ao centro de cada sólido e cruza a janela no pon
 Uso:
     python3 visualizar_projecao.py                          # eye padrão, abre a janela
     python3 visualizar_projecao.py --eye 26 18 28           # outro eye
-    python3 visualizar_projecao.py --eye 26 18 28 --salvar eye2   # salva eye2.png nas figuras do relatório
 """
 
 import argparse
-from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -28,15 +26,12 @@ from visualizar_camera import desenhar_cena_na_camera
 from visualizar_objetos import para_plot
 
 FRACAO_JANELA = 0.5   # a janela fica a esta fração da distância entre o eye e o at
-PASTA_FIGURAS = Path(__file__).parent / "relatorio/figuras/03-desenvolvimento/04-projecao"
 
 
 def ler_argumentos():
     parser = argparse.ArgumentParser(description="Sólidos em 3D e projeção na janela")
     parser.add_argument("--eye", nargs=3, type=float, metavar=("X", "Y", "Z"),
                         default=EYE_PRINCIPAL.tolist(), help="posição do observador")
-    parser.add_argument("--salvar", metavar="NOME",
-                        help="salva a figura como NOME.png na pasta de figuras do relatório")
     return parser.parse_args()
 
 
@@ -119,13 +114,7 @@ def main():
     ax_janela = fig.add_subplot(1, 2, 2)
     desenhar_projecao(np.array(args.eye), ax, ax_janela)
     fig.tight_layout()
-
-    if args.salvar:
-        destino = PASTA_FIGURAS / f"{args.salvar}.png"
-        fig.savefig(destino, dpi=150, bbox_inches="tight")
-        print(f"salvo em {destino}")
-    else:
-        plt.show()
+    plt.show()
 
 
 if __name__ == "__main__":

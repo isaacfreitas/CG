@@ -12,11 +12,9 @@ Mostra a cena no sistema de coordenadas da câmera, em 3D:
 Uso:
     python3 visualizar_camera.py                          # eye padrão, abre a janela
     python3 visualizar_camera.py --eye 26 18 28           # outro eye
-    python3 visualizar_camera.py --eye 26 18 28 --salvar eye2   # salva eye2.png nas figuras do relatório
 """
 
 import argparse
-from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,15 +29,12 @@ from visualizar_objetos import para_plot
 RESOLUCAO = 50          # grade do Marching Cubes (menor que a da cena, para o plot ficar leve)
 TAMANHO_EIXOS = 5.0     # comprimento das setas u, v, n
 ELEVACAO, AZIMUTE = 20, -60   # ângulo de visão do plot (graus)
-PASTA_FIGURAS = Path(__file__).parent / "relatorio/figuras/03-desenvolvimento/03-camera"
 
 
 def ler_argumentos():
     parser = argparse.ArgumentParser(description="Cena em coordenadas de câmera")
     parser.add_argument("--eye", nargs=3, type=float, metavar=("X", "Y", "Z"),
                         default=EYE_PRINCIPAL.tolist(), help="posição do observador")
-    parser.add_argument("--salvar", metavar="NOME",
-                        help="salva a figura como NOME.png na pasta de figuras do relatório")
     return parser.parse_args()
 
 
@@ -140,13 +135,7 @@ def main():
     ax = fig.add_subplot(projection="3d")
     desenhar_cena_na_camera(np.array(args.eye), ax)
     fig.tight_layout()
-
-    if args.salvar:
-        destino = PASTA_FIGURAS / f"{args.salvar}.png"
-        fig.savefig(destino, dpi=150)
-        print(f"salvo em {destino}")
-    else:
-        plt.show()
+    plt.show()
 
 
 if __name__ == "__main__":

@@ -6,11 +6,7 @@ com os eixos x, y, z na origem e setas com as normais de algumas faces.
 
 Uso:
     python3 visualizar_objetos.py            # abre uma janela por objeto
-    python3 visualizar_objetos.py --salvar   # salva os PNGs nas figuras do relatório
 """
-
-import sys
-from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -22,9 +18,6 @@ import modeling
 RESOLUCAO = 50          # grade do Marching Cubes (menor que a da cena, para o plot ficar leve)
 NUM_NORMAIS = 60        # quantas normais de face desenhar como setas
 ELEVACAO, AZIMUTE = 20, -60   # ângulo de visão do plot (graus)
-PASTA_FIGURAS = Path(__file__).parent / "relatorio/figuras/03-desenvolvimento/01-modelagem"
-ARQUIVOS = {"Peão": "peao", "Lápis": "lapis", "Altere": "haltere",
-            "Martelo": "martelo", "Lixeira": "lixeira"}
 
 
 def para_plot(pontos):
@@ -91,7 +84,6 @@ def mostrar_solido(solido, ax):
 
 
 def main():
-    salvar = "--salvar" in sys.argv
     for nome in modeling.MODELOS:
         print(f"Criando sólido: {nome}")
         solido = modeling.obter_solido(nome, RESOLUCAO)
@@ -101,13 +93,7 @@ def main():
         ax = fig.add_subplot(projection="3d", computed_zorder=False)
         mostrar_solido(solido, ax)
         fig.tight_layout()
-        if salvar:
-            destino = PASTA_FIGURAS / f"{ARQUIVOS[nome]}.png"
-            fig.savefig(destino, dpi=150)
-            plt.close(fig)
-            print(f"  salvo em {destino}")
-    if not salvar:
-        plt.show()
+    plt.show()
 
 
 if __name__ == "__main__":
