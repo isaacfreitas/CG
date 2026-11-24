@@ -7,7 +7,7 @@
 \section{Simulações computacionais}\label{sec:simulacoes}
 
 As simulações foram feitas em Python 3.14, com NumPy, Matplotlib e scikit-image. A malha de cada
-objeto foi gerada com 80 pontos por eixo. A câmera principal usa $eye = (7{,}5;\ 10;\ 5)$,
+objeto foi gerada com 80 pontos por eixo. A câmera principal usa $eye = (9{,}75;\ 13;\ 6{,}5)$,
 $at = (0, 0, 0)$ e $up = (0, 1, 0)$, e a luz fica em $(5;\ 20;\ 15)$.
 
 \subsection{Três resoluções}\label{sec:sim-resolucoes}
@@ -15,8 +15,9 @@ $at = (0, 0, 0)$ e $up = (0, 1, 0)$, e a luz fica em $(5;\ 20;\ 15)$.
 A Figura~\ref{fig:resolucoes} mostra a mesma cena rasterizada em $200 \times 200$, $400 \times 400$
 e $800 \times 800$ pixels. Com mais pixels, os contornos ficam mais lisos e o brilho especular
 aparece com mais detalhe. Em $200 \times 200$ já dá para reconhecer os objetos, mas as bordas
-ficam serrilhadas. O tempo de rasterização foi de 1,4 s, 1,5 s e 2,0 s, respectivamente, sem contar
-a geração das malhas.
+ficam serrilhadas. O tempo de rasterização foi de 0,8 s, 0,9 s e 1,4 s, respectivamente, sem contar
+a geração das malhas, que levou 0,2 s. A cena tem 62\,452 triângulos. Nenhum ficou fora do volume
+de visão, 32\,204 foram descartados por estarem de costas e 30\,248 foram desenhados.
 
 \begin{figure}[H]
   \centering
@@ -41,10 +42,8 @@ a geração das malhas.
 
 \subsection{Mudança do eye}\label{sec:sim-eye}
 
-Ao trocar o \textit{eye} para $(26;\ 18;\ 28)$, a base da câmera e a matriz de visualização são
-recalculadas e a imagem muda. Nessa posição, a câmera fica mais longe e mostra todos os objetos
-dentro da caixa que marca o limite de $|10|$ (Figura~\ref{fig:eye2}).
+Quando o \textit{eye} muda para $(26;\ 18;\ 28)$, o código recalcula a base da câmera e a matriz de
+visualização, e a imagem muda. Nessa posição, a câmera fica mais longe e mostra todos os objetos
+(Figura~\ref{fig:eye2}).
 
 \figura{04-simulacoes/eye2-400.png}{0.45\textwidth}{Cena vista de $eye = (26;\ 18;\ 28)$, em $400 \times 400$}{fig:eye2}{Os autores (2026)}
-
-\confirmar{comentar a lixeira cortada na borda direita da câmera principal, ou ajustar o eye}

@@ -4,8 +4,10 @@
 \subsection{Composição da cena}\label{sec:cena}
 
 Para colocar os objetos no sistema de coordenadas do mundo, cada vértice passa por escala,
-rotação em torno de $x$, de $y$ e de $z$ e, por fim, translação. Todas são matrizes $4 \times 4$
-em coordenadas homogêneas, e o produto delas é a matriz do mundo:
+rotação em torno de $x$, de $y$ e de $z$ e, por fim, translação. Todas são matrizes $4 \times 4$.
+Elas usam coordenadas homogêneas, que acrescentam um quarto número ($w$) a cada ponto. Assim, a
+translação também vira uma multiplicação de matriz \cite{azevedo2018}. O produto das matrizes é a
+matriz do mundo:
 
 \begin{equation}
   M_{mundo} = T \cdot R_z \cdot R_y \cdot R_x \cdot S .
@@ -43,9 +45,9 @@ mais baixo e escolhe $t_y$ para que ele encoste no chão.
     \toprule
     Objeto & Escala & Rotação $(x, y, z)$ & Posição $(x, z)$ & Efeito \\
     \midrule
-    Peão    & 1,2 & $(0^\circ, 0^\circ, 0^\circ)$     & $(-6{,}5;\ -4{,}5)$ & ampliado \\
+    Peão    & 0,8 & $(0^\circ, 0^\circ, 0^\circ)$     & $(-6{,}5;\ -4{,}5)$ & reduzido \\
     Lápis   & 1,0 & $(90^\circ, 45^\circ, 0^\circ)$   & $(-8{,}0;\ 0{,}5)$  & deitado, na diagonal \\
-    Haltere & 0,9 & $(0^\circ, 0^\circ, 90^\circ)$    & $(-1{,}5;\ -4{,}5)$ & reduzido, em pé \\
+    Haltere & 1,2 & $(0^\circ, 0^\circ, 90^\circ)$    & $(-1{,}5;\ -4{,}5)$ & ampliado, em pé \\
     Martelo & 1,0 & $(-90^\circ, -30^\circ, 0^\circ)$ & $(1{,}0;\ 3{,}2)$   & deitado, girado \\
     Lixeira & 1,1 & $(0^\circ, 0^\circ, 0^\circ)$     & $(3{,}5;\ -4{,}5)$  & ampliada \\
     \bottomrule
@@ -53,12 +55,11 @@ mais baixo e escolhe $t_y$ para que ele encoste no chão.
   \fonte{Os autores (2026).}
 \end{table}
 
-A função \texttt{validar\_cena} confere a cena sozinha, sem conferência manual. Ela verifica duas
-coisas:
+A função \texttt{validar\_cena} confere a cena automaticamente. Ela verifica duas coisas:
 
 \begin{itemize}
   \item \textbf{Limite $|10|$}: nenhuma componente de nenhum vértice, depois de transformado, pode
-        passar de 10. O maior valor na cena é $8{,}88$ (eixo $x$ do peão).
+        passar de 10. O maior valor na cena é $8{,}46$ (eixo $x$ do lápis).
   \item \textbf{Sobreposição}: cada objeto é envolvido pela menor caixa alinhada aos eixos que o
         contém. Duas caixas estão separadas quando, em pelo menos um eixo, uma termina antes de a
         outra começar. Se as caixas não se cruzam, os objetos também não. Exigimos ainda uma folga

@@ -5,7 +5,8 @@
 
 A câmera é definida por três pontos: a posição do observador (\textit{eye}), o ponto para onde ele
 olha (\textit{at}) e um vetor que indica o lado de cima (\textit{up}). Neste trabalho, \textit{at} é a
-origem do mundo e \textit{up} é $(0, 1, 0)$. A partir deles, calcula-se a base vetorial da câmera:
+origem do mundo e \textit{up} é $(0, 1, 0)$. A partir deles, calcula-se a base vetorial da câmera
+\cite{azevedo2018}:
 
 \begin{align}
   \vec{n} &= \frac{eye - at}{\|eye - at\|}, \\
@@ -13,7 +14,8 @@ origem do mundo e \textit{up} é $(0, 1, 0)$. A partir deles, calcula-se a base 
   \vec{v} &= \vec{n} \times \vec{u}.
 \end{align}
 
-O vetor $\vec{n}$ é o eixo $z$ da câmera e aponta do alvo para o observador. Os vetores $\vec{u}$ e
+O vetor $\vec{n}$ é o eixo $z$ da câmera. Ele aponta do alvo para o observador, então a câmera olha
+na direção de $-\vec{n}$. Os vetores $\vec{u}$ e
 $\vec{v}$ são os eixos $x$ e $y$. Com a base, monta-se a matriz de visualização, que leva um ponto do
 mundo para o sistema da câmera:
 
@@ -26,12 +28,34 @@ mundo para o sistema da câmera:
   \end{bmatrix}.
 \end{equation}
 
-Para $eye = (7{,}5;\ 10;\ 5)$, a base é $\vec{u} = (0{,}555;\ 0;\ -0{,}832)$,
+Para $eye = (9{,}75;\ 13;\ 6{,}5)$, a base é $\vec{u} = (0{,}555;\ 0;\ -0{,}832)$,
 $\vec{v} = (-0{,}618;\ 0{,}670;\ -0{,}412)$ e $\vec{n} = (0{,}557;\ 0{,}743;\ 0{,}371)$.
+
+A Figura~\ref{fig:base-camera} mostra, em um desenho esquemático, como os três vetores ficam em
+relação ao \textit{eye} e ao \textit{at}.
+
+\begin{figure}[H]
+  \centering
+  \caption{Base vetorial da câmera}\label{fig:base-camera}
+  \begin{tikzpicture}[>=Stealth, scale=1.1]
+    \coordinate (at) at (0,0);
+    \coordinate (eye) at (5,3);
+    \fill (at) circle (2pt) node[below left] {$at$};
+    \fill (eye) circle (2pt) node[above right] {$eye$};
+    \draw[dashed, gray] (eye) -- (at) node[midway, below right, black] {olhar: direção $-\vec{n}$};
+    \draw[->, very thick] (eye) -- ++(1.7,1.0) node[above] {$\vec{n}$};
+    \draw[->, very thick] (eye) -- ++(1.5,-1.0) node[right] {$\vec{u}$};
+    \draw[->, very thick] (eye) -- ++(-0.5,1.4) node[above] {$\vec{v}$};
+    \draw[->] (0,0) -- (0,1.2) node[above] {$\vec{up}$};
+  \end{tikzpicture}
+  \fonte{Adaptado de \textcite{azevedo2018}.}
+\end{figure}
 
 A Figura~\ref{fig:camera} mostra a cena nesse sistema, com o ponto preto marcando a origem do
 mundo. Quando o valor de \textit{eye} muda, a base e a matriz são recalculadas e a imagem muda,
-como mostra o segundo exemplo, com $eye = (26;\ 18;\ 28)$.
+como mostra o segundo exemplo, com $eye = (26;\ 18;\ 28)$, em que a base passa a ser
+$\vec{u} = (0{,}733;\ 0;\ -0{,}680)$, $\vec{v} = (-0{,}290;\ 0{,}905;\ -0{,}312)$ e
+$\vec{n} = (0{,}616;\ 0{,}426;\ 0{,}663)$.
 
 \begin{figure}[H]
   \centering
@@ -39,7 +63,7 @@ como mostra o segundo exemplo, com $eye = (26;\ 18;\ 28)$.
   \begin{subfigure}{0.48\textwidth}
     \centering
     \includegraphics[width=\textwidth]{03-desenvolvimento/03-camera/eye1.png}
-    \caption{$eye = (7{,}5;\ 10;\ 5)$}
+    \caption{$eye = (9{,}75;\ 13;\ 6{,}5)$}
   \end{subfigure}\hfill
   \begin{subfigure}{0.48\textwidth}
     \centering

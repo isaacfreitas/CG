@@ -60,6 +60,10 @@
 \DeclareFloatingEnvironment[fileext=loq,name=Quadro,placement=H]{quadro}
 \captionsetup[quadro]{position=above}
 
+% Diagramas desenhados no próprio LaTeX (câmera, volume de visão, Phong, retas, scan line, baricêntrica)
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc}
+
 % \fonte{...}: linha "Fonte: ..." abaixo de figura, tabela ou quadro
 \newcommand{\fonte}[1]{\par\vspace{2pt}{\centering\footnotesize Fonte: #1\par}}
 

@@ -7,8 +7,8 @@ Foram modelados cinco objetos do cotidiano: lápis, peão de xadrez, haltere, ma
 objeto fica no seu próprio sistema de coordenadas, apoiado em $y = 0$ e centrado no eixo $y$. O
 haltere é o único deitado, ao longo do eixo $x$.
 
-Cada objeto é descrito por uma função $F(x, y, z)$ que diz se um ponto está dentro ($F < 0$), na
-superfície ($F = 0$) ou fora ($F > 0$) dele. Por exemplo, para uma esfera de raio $r$ e centro
+Cada objeto é descrito por uma função $F(x, y, z)$, chamada de superfície implícita. Ela diz se um
+ponto está dentro ($F < 0$), na superfície ($F = 0$) ou fora ($F > 0$) do objeto. Por exemplo, para uma esfera de raio $r$ e centro
 $(c_x, c_y, c_z)$:
 
 \begin{equation}
@@ -39,11 +39,12 @@ completo, em coordenadas do objeto:
   \item \textbf{cor}: RGB do sólido, a mesma para faces e arestas.
 \end{itemize}
 
-Para garantir que a normal de cada face aponta para fora, ela é comparada com a média das normais
-dos seus três vértices. Se o produto escalar for negativo, a normal e a ordem dos vértices da face
-são invertidas. Dois testes confirmam o resultado nos cinco objetos: o volume calculado pelas faces
-(teorema da divergência) é positivo, o que só acontece com as normais para fora, e toda malha
-satisfaz $V - A + F = 2$, ou seja, é uma superfície fechada, sem buracos.
+Para garantir que a normal de cada face aponta para fora, o código compara essa normal com a média
+das normais dos três vértices. Se o produto escalar der negativo, o código inverte a normal e a
+ordem dos vértices da face. Dois testes confirmam o resultado nos cinco objetos. No primeiro, o
+volume calculado pelas faces (pelo teorema da divergência, que soma a contribuição de cada
+triângulo) é positivo, o que só acontece com as normais para fora. No segundo, toda malha satisfaz
+$V - A + F = 2$, ou seja, é uma superfície fechada, sem buracos.
 
 A Figura~\ref{fig:objetos} mostra os objetos, cada um no seu sistema, com os eixos e as normais de
 algumas faces (setas pretas).

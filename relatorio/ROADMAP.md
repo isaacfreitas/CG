@@ -40,8 +40,8 @@ em `main.py` (ver `DOCUMENTACAO.md`, seção 1).
 ## Fase 4: Fechamento
 
 - [x] 4.1 Conclusão
-- [ ] 4.2 Referências: livro-texto (subseção 5.2.1) e conferir todas as citações
-- [ ] 4.3 Revisar o texto e resolver todos os `\confirmar{...}`
+- [ ] 4.2 Referências: livro-texto (Azevedo, Conci e Vasconcelos) já citado; falta conferir edição, ano e editora na capa do livro e conferir todas as citações no PDF
+- [ ] 4.3 Revisar o texto e resolver todos os `\confirmar{...}` (resta só o dos dados do livro)
 - [ ] 4.4 Gerar o PDF final
 - [ ] 4.5 Gerar o `.zip` do código sem `.venv` e sem `__pycache__`
 - [ ] 4.6 Subir os 2 arquivos (zip + pdf), sem link de drive

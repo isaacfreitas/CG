@@ -122,7 +122,7 @@ def main():
 
     if args.salvar:
         destino = PASTA_FIGURAS / f"{args.salvar}.png"
-        fig.savefig(destino, dpi=150)
+        fig.savefig(destino, dpi=150, bbox_inches="tight")
         print(f"salvo em {destino}")
     else:
         plt.show()

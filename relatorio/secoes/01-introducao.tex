@@ -4,9 +4,9 @@
 \section{Introdução}\label{sec:introducao}
 
 A Computação Gráfica ensina o computador a desenhar objetos 3D na tela. Para isso, ele faz uma
-série de passos. Primeiro cria o objeto. Depois coloca o objeto em uma cena, escolhe de onde olhar,
-transforma o 3D em uma imagem 2D, calcula a luz e pinta cada pixel. Esse conjunto de passos é
-chamado de pipeline gráfico.
+sequência de passos, como uma linha de montagem. Primeiro cria o objeto. Depois coloca o objeto em
+uma cena, escolhe de onde olhar, transforma o 3D em uma imagem 2D, calcula a luz e pinta cada
+pixel. Essa sequência se chama pipeline gráfico.
 
 Neste trabalho, o grupo fez todos esses passos. Foram escolhidos cinco objetos do dia a dia: um
 lápis, um peão de xadrez, um haltere, um martelo e uma lixeira. Cada um foi descrito por uma
@@ -19,10 +19,13 @@ projetada em perspectiva, como a gente enxerga na vida real. A cor de cada ponto
 o modelo de Phong \cite{phong1975}, que considera a luz do ambiente, a luz difusa e o brilho. Por
 fim, os triângulos foram pintados na imagem com um rasterizador feito pelo grupo.
 
+A base teórica de cada etapa vem do livro-texto da disciplina \cite{azevedo2018}.
+\confirmar{conferir edição, ano e editora do livro em referencias.bib}
+
 O código foi escrito em Python. A biblioteca NumPy \cite{harris2020} ajudou nas contas com
-matrizes e a Matplotlib \cite{hunter2007} mostrou as imagens. Só o \textit{Marching Cubes}, que gera
-a malha dos objetos, foi usado pronto, já que não era obrigatório implementá-lo. Todo o resto foi programado pelo
-grupo.
+matrizes e a Matplotlib \cite{hunter2007} mostrou as imagens. O grupo implementou as fórmulas de
+cada etapa, como o modelo de Phong \cite{phong1975}. Só o \textit{Marching Cubes} veio pronto, da
+biblioteca scikit-image.
 
 O relatório segue esta ordem. A Seção~\ref{sec:objetivos} mostra os objetivos. A
 Seção~\ref{sec:desenvolvimento} explica cada passo do pipeline. A Seção~\ref{sec:simulacoes}

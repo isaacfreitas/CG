@@ -2,7 +2,7 @@
 % Fonte no código: illumination.py (calcular_iluminacao_phong), main.py (POSICAO_LUZ, coeficientes)
 \subsection{Iluminação}\label{sec:iluminacao}
 
-A cor de cada vértice visível é calculada com o modelo de Phong \cite{phong1975}, que soma três
+O código calcula a cor de cada vértice visível com o modelo de Phong \cite{phong1975}, que soma três
 componentes: ambiente, difusa e especular. Com luz branca e cor do objeto $\vec{C}$, a cor final é
 
 \begin{equation}
@@ -17,10 +17,29 @@ Cada termo tem um papel:
   \item \textbf{especular:} o brilho. Depende do ângulo entre o reflexo da luz $\vec{R} = 2(\vec{N} \cdot \vec{L})\vec{N} - \vec{L}$ e a direção do observador $\vec{V}$, elevado ao expoente $b$.
 \end{itemize}
 
+A Figura~\ref{fig:phong} mostra os quatro vetores em um ponto da superfície.
+
+\begin{figure}[H]
+  \centering
+  \caption{Vetores do modelo de Phong em um ponto da superfície}\label{fig:phong}
+  \begin{tikzpicture}[>=Stealth, scale=1.2]
+    \draw[thick] (-3.5,0) -- (3.5,0) node[right] {superfície};
+    \fill (0,0) circle (2pt);
+    \draw[->, very thick] (0,0) -- (0,2.4) node[above] {$\vec{N}$};
+    \draw[->, very thick] (0,0) -- (-1.8,1.8) node[above left] {$\vec{L}$ (para a luz)};
+    \draw[->, very thick] (0,0) -- (1.8,1.8) node[above right] {$\vec{R}$ (reflexo)};
+    \draw[->, very thick] (0,0) -- (2.6,0.9) node[right] {$\vec{V}$ (para o observador)};
+    \draw (0,0.8) arc (90:135:0.8);
+    \draw (0,1.0) arc (90:45:1.0);
+  \end{tikzpicture}
+  \fonte{Adaptado de \textcite{azevedo2018}.}
+\end{figure}
+
 Os vetores $\vec{N}$, $\vec{L}$ e $\vec{V}$ têm tamanho 1. Se $\vec{N} \cdot \vec{L}$ é negativo, a luz
 vem por trás da face, e as componentes difusa e especular valem zero. Foram usados
-$k_a = 0{,}5$, $k_d = 0{,}8$, $k_s = 0{,}4$ e $b = 32$, com a luz em $(5;\ 20;\ 15)$. O resultado é
-limitado ao intervalo $[0, 1]$ em cada canal RGB.
+$k_a = 0{,}5$, $k_d = 0{,}8$, $k_s = 0{,}4$ e $b = 32$, com a luz em $(5;\ 20;\ 15)$. O código limita
+o resultado ao intervalo $[0, 1]$ em cada canal RGB (vermelho, verde e azul).
 
-O cálculo é feito só nos três vértices de cada triângulo visível. A cor dos pixels do meio do
-triângulo vem da interpolação dessas três cores (Seção~\ref{sec:rasterizacao}).
+O código faz esse cálculo só nos três vértices de cada triângulo visível. A cor dos pixels do meio
+do triângulo vem da interpolação dessas três cores (Seção~\ref{sec:rasterizacao}). Essa técnica,
+que usa o modelo de Phong só nos vértices, se chama sombreamento de Gouraud.

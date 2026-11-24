@@ -1,39 +1,115 @@
 % Etapa 6 do enunciado: rasterização.
 % Fonte no código: rasterizer.py, main.py (renderizar_cena_completa)
-% Pendências de código: culling pelo eixo z da câmera (hoje usa a posição do eye no mundo).
 % Retas: rasterizer.rasterizar_reta (algoritmo da equação da reta, aula de 30/09).
+% Culling: math_3d.face_voltada_para_camera. Ordem dos estágios: main.renderizar_cena_completa.
 \subsection{Rasterização}\label{sec:rasterizacao}
 
-A rasterização transforma cada triângulo em pixels. Ela segue cinco passos, repetidos para todos os
-triângulos da cena.
+A rasterização transforma cada triângulo em pixels. Para cada triângulo da cena, o código segue
+esta ordem: recorte pelo volume de visão (Seção~\ref{sec:projecao}), eliminação de faces ocultas,
+iluminação dos vértices (Seção~\ref{sec:iluminacao}), preenchimento por \textit{scan line},
+interpolação baricêntrica, Z-buffer e, por fim, desenho das arestas. Os cinco passos a seguir
+explicam as partes novas.
 
-\textbf{1. Eliminação de faces ocultas.} Para cada triângulo com vértices $v_0$, $v_1$ e $v_2$, calcula-se
-a normal $\vec{N}_f = (v_1 - v_0) \times (v_2 - v_0)$. Se a normal aponta para longe da câmera, ou
-seja, se $\vec{N}_f \cdot (eye - v_0) \le 0$, o triângulo é descartado. \confirmar{trocar pelo teste com o eixo $z$ da câmera, como o enunciado pede}
+\textbf{1. Eliminação de faces ocultas.} Para cada triângulo com vértices $v_0$, $v_1$ e $v_2$, o
+código calcula a normal $\vec{N}_f = (v_1 - v_0) \times (v_2 - v_0)$ e a leva para o sistema da
+câmera. Nesse sistema o observador fica na origem, então o vetor da câmera até o triângulo é o
+próprio vértice $v_0$. O triângulo está de frente quando $\vec{N}_f \cdot v_0 < 0$. Se o resultado é
+zero ou positivo, o triângulo está de costas ou de lado, e o código o descarta. O código usa esse
+vetor, e não só o sinal do eixo $z$ da normal, porque na perspectiva a direção de visada muda de
+triângulo para triângulo. Só no centro da imagem ela coincide com o eixo $z$ da câmera. Perto das
+bordas, usar apenas o eixo $z$ descartaria triângulos quase de lado que ainda são visíveis.
 
-\textbf{2. Retas.} As retas são desenhadas pelo algoritmo da equação da reta. Calculam-se
+\textbf{2. Retas.} O código desenha as retas pelo algoritmo da equação da reta
+\cite[seção 5.2.1]{azevedo2018}. Ele calcula
 $dx = x_f - x_i$, $dy = y_f - y_i$, $m = dy/dx$ e $b = y_i - m\,x_i$. Se $|dx| > |dy|$, a reta é mais
 deitada: $x$ anda de 1 em 1 e $y = m\,x + b$. Senão, $y$ anda de 1 em 1 e $x = (y - b)/m$. Andar no eixo
-que mais varia evita buracos na reta. Cada ponto vira o pixel que o contém (a parte inteira de $x$ e de
-$y$), com centro em $(\lfloor x\rfloor + 0{,}5,\ \lfloor y\rfloor + 0{,}5)$. A reta vertical ($dx = 0$,
-$m$ infinito) e as retas da direita para a esquerda são tratadas à parte. De $(0,0)$ a $(5,2)$, por
-exemplo, $m = 0{,}4$ e os pixels são $(0,0)$, $(1,0)$, $(2,0)$, $(3,1)$, $(4,1)$ e $(5,2)$. Nesta cena, ele desenha a grade do chão e a caixa que marca os limites.
+que mais varia evita buracos na reta. Cada ponto vira o pixel que o contém, isto é, a parte inteira
+de $x$ e de $y$. O centro desse pixel fica em $(\lfloor x\rfloor + 0{,}5,\ \lfloor y\rfloor + 0{,}5)$.
+O código trata à parte a reta vertical ($dx = 0$, em que $m$ seria infinito) e as retas da direita
+para a esquerda. De $(0,0)$ a $(5,2)$, por exemplo, $m = 0{,}4$ e os pixels são $(0,0)$, $(1,0)$,
+$(2,0)$, $(3,1)$, $(4,1)$ e $(5,2)$, como mostra a Figura~\ref{fig:reta-pixels}. Nesta cena, o
+algoritmo desenha a grade do chão e as arestas de cada triângulo, na cor iluminada dos vértices.
 
-\textbf{3. Preenchimento por scan line, com par-ímpar.} Para cada linha $y$ da imagem, calcula-se onde ela
-cruza as arestas do triângulo e ordenam-se os cruzamentos por $x$. Os pixels entre o primeiro e o
-segundo cruzamento ficam dentro do triângulo, e assim por diante, de par em par.
+\begin{figure}[H]
+  \centering
+  \caption{Reta de $(0,0)$ a $(5,2)$ pelo algoritmo da equação da reta}\label{fig:reta-pixels}
+  \begin{tikzpicture}[scale=0.9]
+    \foreach \x/\y in {0/0, 1/0, 2/0, 3/1, 4/1, 5/2} {
+      \fill[gray!45] (\x,\y) rectangle (\x+1,\y+1);
+    }
+    \draw[gray] (0,0) grid (6,3);
+    \draw[very thick] (0,0) -- (5,2);
+    \fill (0,0) circle (2pt);
+    \fill (5,2) circle (2pt);
+    \foreach \x in {0,...,5} \node[below] at (\x+0.5,0) {\small \x};
+    \foreach \y in {0,1,2} \node[left] at (0,\y+0.5) {\small \y};
+    \node[right] at (6,0.5) {\small $x$};
+    \node[above] at (0.5,3) {\small $y$};
+  \end{tikzpicture}
+  \fonte{Adaptado de \textcite{azevedo2018}.}
+\end{figure}
+
+\textbf{3. Preenchimento por scan line, com par-ímpar} \cite{azevedo2018}. Para cada linha $y$ da imagem, o código
+calcula onde ela cruza as arestas do triângulo e ordena os cruzamentos por $x$. Os pixels entre o
+primeiro e o segundo cruzamento ficam dentro do triângulo, e assim por diante, de par em par. A
+Figura~\ref{fig:scanline} mostra uma linha cortando um triângulo.
+
+\begin{figure}[H]
+  \centering
+  \caption{Scan line com o algoritmo par-ímpar}\label{fig:scanline}
+  \begin{tikzpicture}[>=Stealth, scale=1.1]
+    \coordinate (A) at (0,0);
+    \coordinate (B) at (5,1);
+    \coordinate (C) at (2,3.5);
+    \draw[thick] (A) -- (B) -- (C) -- cycle;
+    \draw[dashed, gray] (-0.8,1.6) -- (5.8,1.6) node[right, black] {linha $y$};
+    \draw[line width=2pt, gray!70] (0.914,1.6) -- (4.28,1.6);
+    \fill (0.914,1.6) circle (2pt) node[above left] {1º cruzamento};
+    \fill (4.28,1.6) circle (2pt) node[above right] {2º cruzamento};
+    \node at (2.6,1.15) {\small dentro};
+  \end{tikzpicture}
+  \fonte{Adaptado de \textcite{azevedo2018}.}
+\end{figure}
 
 \textbf{4. Interpolação baricêntrica.} Para um pixel $P$ dentro do triângulo $ABC$, as coordenadas baricêntricas
 são razões de áreas: $\alpha = \text{Área}(PBC)/\text{Área}(ABC)$, $\beta = \text{Área}(APC)/\text{Área}(ABC)$ e
 $\gamma = 1 - \alpha - \beta$. Com elas, a cor e a profundidade do pixel são uma média ponderada dos três
-valores dos vértices:
+valores dos vértices (Figura~\ref{fig:baricentrica}):
 
 \begin{equation}
   cor_P = \alpha \, cor_A + \beta \, cor_B + \gamma \, cor_C .
 \end{equation}
 
-\textbf{5. Z-buffer.} Uma matriz guarda a profundidade do pixel mais próximo já pintado. Um pixel novo só
-é escrito se ficar mais perto da câmera. Assim, um objeto na frente esconde o que está atrás.
+\begin{figure}[H]
+  \centering
+  \caption{Coordenadas baricêntricas como razões de áreas}\label{fig:baricentrica}
+  \begin{tikzpicture}[scale=1.1]
+    \coordinate (A) at (0,0);
+    \coordinate (B) at (5,0);
+    \coordinate (C) at (2,3.5);
+    \coordinate (P) at (2.6,1.2);
+    \fill[gray!35] (P) -- (B) -- (C) -- cycle;
+    \draw[thick] (A) -- (B) -- (C) -- cycle;
+    \draw (P) -- (A);
+    \draw (P) -- (B);
+    \draw (P) -- (C);
+    \fill (P) circle (2pt) node[below left] {$P$};
+    \node[below left] at (A) {$A$};
+    \node[below right] at (B) {$B$};
+    \node[above] at (C) {$C$};
+    \node at (3.2,1.55) {\small $\alpha$};
+    \node at (1.5,1.5) {\small $\beta$};
+    \node at (2.6,0.4) {\small $\gamma$};
+  \end{tikzpicture}
+
+  \vspace{4pt}
+  {\footnotesize $\alpha$ = área sombreada $(PBC)$ / área $(ABC)$; \ $\beta$ = área $(APC)$ / área $(ABC)$; \ $\gamma$ = área $(ABP)$ / área $(ABC)$.\par}
+  \fonte{Adaptado de \textcite{azevedo2018}.}
+\end{figure}
+
+\textbf{5. Z-buffer.} O Z-buffer é uma matriz que guarda a profundidade do pixel mais próximo já
+pintado. O código só escreve um pixel novo se ele ficar mais perto da câmera. Assim, um objeto na
+frente esconde o que está atrás.
 
 A cena foi rasterizada em três resoluções: $200 \times 200$, $400 \times 400$ e $800 \times 800$
 pixels. Os resultados estão na Seção~\ref{sec:simulacoes}.
