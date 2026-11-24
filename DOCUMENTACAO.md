@@ -55,8 +55,7 @@ Saída do `main.py`:
 
 O `visualizar_camera.py` é leve (segundos). Ele imprime a base, leva os vértices de todos os
 sólidos para o sistema da câmera e mostra o resultado em 3D, com os eixos `u`, `v`, `n` e um
-ponto preto na origem do mundo. Com `--salvar NOME`, grava `NOME.png` na pasta de figuras da
-câmera do relatório.
+ponto preto na origem do mundo.
 
 ---
 
@@ -66,12 +65,12 @@ câmera do relatório.
 |---|---|---|
 | `primitives.py` | Formas implícitas F(x,y,z) (F<0 dentro) e operações CSG | Pronto (+ `cilindro_x` novo) |
 | `modeling.py` | `extrair_malha` (Marching Cubes), os 5 objetos, `criar_solido`/`obter_solido` e o catálogo `MODELOS` (limites e cor) | Pronto |
-| `visualizar_objetos.py` | Item 1e: plot 3D de cada sólido no sistema do objeto (`--salvar` grava as figuras do relatório) | Pronto |
+| `visualizar_objetos.py` | Item 1e: plot 3D de cada sólido no sistema do objeto | Pronto |
 | `math_3d.py` | Matrizes 4×4: translação, escala, rotações X/Y/Z, `matriz_mundo`, `matriz_normal`, `aplicar_transformacao`, `base_camera` (u, v, n), look-at, perspectiva | Pronto |
 | `cena.py` | `CENA` (posição, rotação, escala), `montar_cena`, `validar_cena` (limite |10| e sobreposição) | Pronto |
-| `visualizar_cena.py` | Item 2b: plot 3D da cena no mundo com eixos, origem e cubo |10| (`--salvar` grava a figura do relatório) | Pronto |
-| `visualizar_camera.py` | Item 3: plot 3D da cena em coordenadas de câmera, com a origem do mundo e os eixos u, v, n (`--eye`, `--salvar`) | Pronto |
-| `visualizar_projecao.py` | Item 4a: sólidos em coordenadas de câmera, janela de projeção e polígonos visíveis projetados (3D + vista frontal da janela; `--eye`, `--salvar`) | Pronto |
+| `visualizar_cena.py` | Item 2b: plot 3D da cena no mundo com eixos, origem e cubo |10| | Pronto |
+| `visualizar_camera.py` | Item 3: plot 3D da cena em coordenadas de câmera, com a origem do mundo e os eixos u, v, n (`--eye`) | Pronto |
+| `visualizar_projecao.py` | Item 4a: sólidos em coordenadas de câmera, janela de projeção e polígonos visíveis projetados (3D + vista frontal da janela; `--eye`) | Pronto |
 | `illumination.py` | Modelo de Phong por vértice | Pronto |
 | `rasterizer.py` | Equação da reta, área, baricêntricas, scan-line par-ímpar | Pronto |
 | `main.py` | Configuração (`CENA`, câmeras, luz), renderização e exibição | Pronto para o item 6 (`--eye` e origem do mundo incluídos); faltam as visualizações dos itens 2 e 4 |
@@ -244,8 +243,7 @@ Verificações feitas (resolução 80):
 - [x] **Ponto na origem do mundo** (item 3d): cruz laranja em `(0, 0, 0)` no `main.py` e ponto
       preto no `visualizar_camera.py`.
 - [x] **Eye variável** (item 3e): `--eye X Y Z` no `main.py` e no `visualizar_camera.py`.
-- [ ] Regerar `eye1.png` e `eye2.png` do relatório com `visualizar_camera.py --salvar`
-      (as figuras atuais foram feitas por um script que não está no repositório).
+- [x] Figuras `eye1.png` e `eye2.png` do relatório refeitas com `visualizar_camera.py`.
 
 ### Item 4 — Projeção
 - [x] **Recorte pelo volume de visão:** `math_3d.face_no_volume_de_visao` descarta a face
@@ -253,7 +251,7 @@ Verificações feitas (resolução 80):
       frustum; é chamada no `main.py` antes do culling.
 - [x] **Plot 3D com a janela de projeção** (item 4a): `visualizar_projecao.py` mostra, no
       mesmo eixo 3D, os sólidos em coordenadas de câmera e os polígonos visíveis projetados
-      no plano da janela; um segundo painel mostra a janela vista de frente (`--eye`, `--salvar`).
+      no plano da janela; um segundo painel mostra a janela vista de frente (`--eye`).
 - [x] **Arestas e faces com a mesma cor** por sólido: `main.desenhar_aresta` desenha as
       arestas de cada face visível com a equação da reta, na cor iluminada do sólido.
 
