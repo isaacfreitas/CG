@@ -47,7 +47,7 @@ Saída do `main.py`:
 - **Terminal:** o eye e a base da câmera principal (`u`, `v`, `n`).
 - **Tela 1:** a cena pela câmera principal (padrão `EYE_PRINCIPAL = (9.75, 13, 6.5)`, ou o valor de
   `--eye`) em 200, 400 e 800 px.
-- **Tela 2:** vista externa "modo Blender" (`EYE_BLENDER = (26, 18, 28)`) em 800 px, com a
+- **Tela 2:** segunda vista (`EYE_SECUNDARIO = (26, 18, 28)`) em 800 px, com a
   gaiola da cena.
 - **Nas duas telas:** uma pequena cruz laranja marca a origem do mundo, exatamente em (0, 0, 0).
 

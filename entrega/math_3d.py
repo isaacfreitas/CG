@@ -139,7 +139,7 @@ def projecao_perspectiva(fov_graus, aspecto, z_near, z_far):
     Matriz de Projeção em Perspectiva 4x4 estrita.
     """
     fov_rad = np.radians(fov_graus)
-    f = 1.0 / np.tan(fov_rad / 2.0)  # f é o d = cotg(α/2) da aula (janela de altura 2)
+    f = 1.0 / np.tan(fov_rad / 2.0)  # f = cotg(α/2) é a distância d até a janela (janela de altura 2)
 
     matriz = np.zeros((4, 4), dtype=float)
     matriz[0, 0] = f / aspecto
@@ -148,14 +148,14 @@ def projecao_perspectiva(fov_graus, aspecto, z_near, z_far):
     # Cálculo minucioso das componentes de profundidade (Z)
     matriz[2, 2] = (z_far + z_near) / (z_near - z_far)
     matriz[2, 3] = (2.0 * z_far * z_near) / (z_near - z_far)
-    # w = -z (a câmera olha para -z). Dividir por w é a divisão por z da aula: x' = d·x/z
+    # w = -z (a câmera olha para -z). Dividir por w é a divisão por z: x' = d·x/z
     matriz[3, 2] = -1.0
 
     return matriz
 
 
 def divisao_perspectiva(vertice_4d):
-    """ Divide x, y, z pela coordenada homogênea W. Em x e y é o x' = d·x/z da aula. """
+    """ Divide x, y, z pela coordenada homogênea W. Em x e y é o x' = d·x/z. """
     if vertice_4d[3] != 0:
         return vertice_4d[:3] / vertice_4d[3]
     return vertice_4d[:3]
@@ -197,7 +197,7 @@ def face_no_volume_de_visao(clip_a, clip_b, clip_c):
 
 def face_voltada_para_camera(normal_camera, vertice_camera):
     """
-    Back-face culling da aula, em coordenadas de câmera: n · v < 0 desenha.
+    Back-face culling em coordenadas de câmera: n · v < 0 desenha.
     O observador está na origem, então v = vertice_camera - eye = vertice_camera
     (vetor da câmera até a face). Se n · v < 0, a face está de frente; se n · v >= 0,
     está de costas ou de lado.

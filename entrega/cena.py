@@ -16,14 +16,14 @@ LIMITE = 10.0     # maior valor permitido para cada componente de um vértice
 Y_CHAO = -2.0     # altura do chão onde os objetos ficam apoiados
 
 # Câmera e luz (item 3 e item 5)
-EYE_PRINCIPAL = np.array([9.75, 13.0,  6.5])   # Câmera da Tela 1 (visão frontal)
-EYE_BLENDER   = np.array([26.0, 18.0, 28.0])   # Câmera da Tela 2 (visão oblíqua)
-AT            = np.array([0.0,   0.0,  0.0])   # Ponto para onde as câmeras apontam
-UP            = np.array([0.0,   1.0,  0.0])   # Vetor "cima" do mundo
-FOV_PRINCIPAL = 58       # Abertura vertical (graus) da câmera da Tela 1
-Z_NEAR        = 0.1      # Plano próximo do volume de visão
-Z_FAR         = 100.0    # Plano distante do volume de visão
-POSICAO_LUZ   = np.array([5.0, 20.0, 15.0])    # Posição da fonte de luz no espaço do mundo
+EYE_PRINCIPAL  = np.array([9.75, 13.0,  6.5])   # Câmera da Tela 1 (visão frontal)
+EYE_SECUNDARIO = np.array([26.0, 18.0, 28.0])  # Câmera da Tela 2 (visão oblíqua)
+AT             = np.array([0.0,   0.0,  0.0])   # Ponto para onde as câmeras apontam
+UP             = np.array([0.0,   1.0,  0.0])   # Vetor "cima" do mundo
+FOV_PRINCIPAL  = 58       # Abertura vertical (graus) da câmera da Tela 1
+Z_NEAR         = 0.1      # Plano próximo do volume de visão
+Z_FAR          = 100.0    # Plano distante do volume de visão
+POSICAO_LUZ    = np.array([5.0, 20.0, 15.0])    # Posição da fonte de luz no espaço do mundo
 
 # ==============================================================================
 # CONFIGURAÇÃO DA CENA

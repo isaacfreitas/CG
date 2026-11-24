@@ -6,11 +6,11 @@ import illumination
 import math_3d
 import rasterizer
 import cena
-from cena import (EYE_PRINCIPAL, EYE_BLENDER, AT, UP, FOV_PRINCIPAL,
+from cena import (EYE_PRINCIPAL, EYE_SECUNDARIO, AT, UP, FOV_PRINCIPAL,
                   Z_NEAR, Z_FAR, POSICAO_LUZ)
 
 # ==============================================================================
-# CONFIGURAÇÃO GLOBAL — ajuste aqui para testes rápidos
+# CONFIGURAÇÃO
 # ==============================================================================
 RESOLUCAO_MARCHING_CUBES = 80               # Qualidade da malha: maior = mais detalhe, mais lento
 RESOLUCOES_TELA          = [200, 400, 800]  # Resoluções comparadas na Tela 1
@@ -122,7 +122,7 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
       8. Arestas da face com a equação da reta, na cor iluminada dos vértices
     """
     imagem   = np.full((resolucao_tela, resolucao_tela, 3), 245, dtype=np.uint8)
-    # Z-buffer (extra, não visto em aula): guarda a profundidade do que já foi pintado em cada pixel.
+    # Z-buffer: guarda a profundidade do que já foi pintado em cada pixel.
     z_buffer = np.full((resolucao_tela, resolucao_tela), np.inf)
 
     desenhar_grade_chao(imagem, z_buffer, view_matrix, proj_matrix, resolucao_tela)
@@ -271,11 +271,11 @@ def main():
     objetos_cena = cena.montar_cena(solidos)
     cena.imprimir_resumo(objetos_cena)
 
-    # Matrizes de câmera e projeção para cada viewport
-    view_principal = math_3d.look_at(eye=eye_principal, at=AT, up=UP)
-    view_blender   = math_3d.look_at(eye=EYE_BLENDER,   at=AT, up=UP)
-    proj_principal = math_3d.projecao_perspectiva(fov_graus=FOV_PRINCIPAL, aspecto=1.0, z_near=Z_NEAR, z_far=Z_FAR)
-    proj_blender   = math_3d.projecao_perspectiva(fov_graus=50, aspecto=1.0, z_near=Z_NEAR, z_far=Z_FAR)
+    # Matrizes de câmera e projeção para cada imagem
+    view_principal  = math_3d.look_at(eye=eye_principal,  at=AT, up=UP)
+    view_secundaria = math_3d.look_at(eye=EYE_SECUNDARIO, at=AT, up=UP)
+    proj_principal  = math_3d.projecao_perspectiva(fov_graus=FOV_PRINCIPAL, aspecto=1.0, z_near=Z_NEAR, z_far=Z_FAR)
+    proj_secundaria = math_3d.projecao_perspectiva(fov_graus=50, aspecto=1.0, z_near=Z_NEAR, z_far=Z_FAR)
 
     # Tela 1: comparativo das 3 resoluções
     fig1, eixos = plt.subplots(1, 3, figsize=(18, 6))
@@ -296,16 +296,16 @@ def main():
     plt.show(block=False)
 
     # Tela 2: segunda posição do eye (item 3e), vista oblíqua da cena
-    print("\n  Rasterizando viewport externa 800×800...")
-    img_blender, contagem = renderizar_cena_completa(
-        800, view_blender, proj_blender,
-        objetos_cena, EYE_BLENDER, POSICAO_LUZ
+    print("\n  Rasterizando segunda imagem 800×800...")
+    img_secundaria, contagem = renderizar_cena_completa(
+        800, view_secundaria, proj_secundaria,
+        objetos_cena, EYE_SECUNDARIO, POSICAO_LUZ
     )
 
     fig2, ax2 = plt.subplots(figsize=(8, 8))
-    fig2.canvas.manager.set_window_title("Tela 2: Viewport Blender")
-    ax2.imshow(img_blender)
-    ax2.set_title(titulo(f"Segundo eye = {EYE_BLENDER.tolist()}", contagem),
+    fig2.canvas.manager.set_window_title("Tela 2: segundo eye")
+    ax2.imshow(img_secundaria)
+    ax2.set_title(titulo(f"Segundo eye = {EYE_SECUNDARIO.tolist()}", contagem),
                   fontsize=10, fontweight='bold', color='#2c3e50')
     ax2.axis('off')
 
