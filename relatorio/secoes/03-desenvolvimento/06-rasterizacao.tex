@@ -1,7 +1,7 @@
 % Etapa 6 do enunciado: rasterização.
 % Fonte no código: rasterizer.py, main.py (renderizar_cena_completa)
-% Pendências de código: culling pelo eixo z da câmera (hoje usa a posição do eye no mundo) e
-% confirmar no livro-texto se a subseção 5.2.1 é o algoritmo de Bresenham.
+% Pendências de código: culling pelo eixo z da câmera (hoje usa a posição do eye no mundo).
+% Retas: rasterizer.rasterizar_reta (algoritmo da equação da reta, aula de 30/09).
 \subsection{Rasterização}\label{sec:rasterizacao}
 
 A rasterização transforma cada triângulo em pixels. Ela segue cinco passos, repetidos para todos os
@@ -11,9 +11,13 @@ triângulos da cena.
 a normal $\vec{N}_f = (v_1 - v_0) \times (v_2 - v_0)$. Se a normal aponta para longe da câmera, ou
 seja, se $\vec{N}_f \cdot (eye - v_0) \le 0$, o triângulo é descartado. \confirmar{trocar pelo teste com o eixo $z$ da câmera, como o enunciado pede}
 
-\textbf{2. Retas.} As retas são desenhadas com o algoritmo de Bresenham, que usa só números inteiros.
-A cada passo, ele avança em $x$ ou em $y$ e usa uma variável de erro para decidir qual pixel fica mais
-perto da reta. Nesta cena, ele desenha a grade do chão e a caixa que marca os limites.
+\textbf{2. Retas.} As retas são desenhadas pelo algoritmo da equação da reta. Calculam-se
+$dx = x_f - x_i$, $dy = y_f - y_i$, $m = dy/dx$ e $b = y_i - m\,x_i$. Se $|dx| > |dy|$, a reta é mais
+deitada: $x$ anda de 1 em 1 e $y = m\,x + b$. Senão, $y$ anda de 1 em 1 e $x = (y - b)/m$. Andar no eixo
+que mais varia evita buracos na reta. Cada ponto vira o pixel que o contém (a parte inteira de $x$ e de
+$y$), com centro em $(\lfloor x\rfloor + 0{,}5,\ \lfloor y\rfloor + 0{,}5)$. A reta vertical ($dx = 0$,
+$m$ infinito) e as retas da direita para a esquerda são tratadas à parte. De $(0,0)$ a $(5,2)$, por
+exemplo, $m = 0{,}4$ e os pixels são $(0,0)$, $(1,0)$, $(2,0)$, $(3,1)$, $(4,1)$ e $(5,2)$. Nesta cena, ele desenha a grade do chão e a caixa que marca os limites.
 
 \textbf{3. Preenchimento por scan line, com par-ímpar.} Para cada linha $y$ da imagem, calcula-se onde ela
 cruza as arestas do triângulo e ordenam-se os cruzamentos por $x$. Os pixels entre o primeiro e o

@@ -23,9 +23,9 @@ imagem final rasterizada) e alguns ajustes pontuais exigidos pelo enunciado.
 | 1 – Modelagem dos 5 objetos | 🟢 Pronto | `modeling.criar_solido` retorna o sólido completo; `visualizar_objetos.py` mostra cada um no seu sistema |
 | 2 – Cena no mundo | 🟢 Pronto | `cena.py`: M = T·Rz·Ry·Rx·S com escala e rotação reais, `validar_cena` automática; `visualizar_cena.py` plota o mundo |
 | 3 – Sistema da câmera | 🟢 Pronto | `math_3d.base_camera` calcula u, v, n; `visualizar_camera.py` plota a cena em coordenadas de câmera; `--eye` troca o observador; origem marcada em (0, 0, 0) |
-| 4 – Projeção perspectiva | 🟢 Pronto | Recorte pelo volume de visão (`face_no_volume_de_visao`); `visualizar_projecao.py` plota os sólidos e a janela de projeção; arestas com Bresenham na cor do sólido |
+| 4 – Projeção perspectiva | 🟢 Pronto | Recorte pelo volume de visão (`face_no_volume_de_visao`); `visualizar_projecao.py` plota os sólidos e a janela de projeção; arestas com a equação da reta na cor do sólido |
 | 5 – Iluminação | 🟢 Pronto | Phong (ambiente + difusa + especular) por vértice |
-| 6 – Rasterização | 🟢 Pronto | 3 resoluções, scan-line par-ímpar, baricêntrica, Bresenham, Z-buffer; culling em coordenadas de câmera com a normal da face |
+| 6 – Rasterização | 🟢 Pronto | 3 resoluções, scan-line par-ímpar, baricêntrica, equação da reta, Z-buffer; culling em coordenadas de câmera com a normal da face |
 | Relatório (Obs. 1) | 🔴 Falta | Capa, introdução, objetivo, desenvolvimento, simulações, conclusão, referências |
 | Entrega (Obs. 2) | 🔴 Falta | `.zip` do código (sem `.venv`, `__pycache__`) + `.pdf` do relatório |
 
@@ -73,7 +73,7 @@ câmera do relatório.
 | `visualizar_camera.py` | Item 3: plot 3D da cena em coordenadas de câmera, com a origem do mundo e os eixos u, v, n (`--eye`, `--salvar`) | Pronto |
 | `visualizar_projecao.py` | Item 4a: sólidos em coordenadas de câmera, janela de projeção e polígonos visíveis projetados (3D + vista frontal da janela; `--eye`, `--salvar`) | Pronto |
 | `illumination.py` | Modelo de Phong por vértice | Pronto |
-| `rasterizer.py` | Bresenham, área, baricêntricas, scan-line par-ímpar | Pronto |
+| `rasterizer.py` | Equação da reta, área, baricêntricas, scan-line par-ímpar | Pronto |
 | `main.py` | Configuração (`CENA`, câmeras, luz), renderização e exibição | Pronto para o item 6 (`--eye` e origem do mundo incluídos); faltam as visualizações dos itens 2 e 4 |
 | `requirements.txt` | `numpy==2.2.6`, `matplotlib==3.10.9`, `scikit-image==0.25.2` | Pronto |
 
@@ -85,7 +85,7 @@ Campo F(x,y,z) ──► Marching Cubes ──► Matriz do mundo (T·R·S) ─�
                                                                           │
 Imagem RGB ◄── Z-buffer ◄── Baricêntrica ◄── Scan-line ◄── Phong ◄── Culling ◄── Recorte ◄── Projeção ÷w
               (+ arestas                     par-ímpar    por vértice                         (→ NDC → pixel)
-               Bresenham)
+               eq. da reta)
 ```
 
 1. **Malha (uma vez por objeto):** `extrair_malha` avalia o campo numa grade 80³ e chama
@@ -106,7 +106,7 @@ Imagem RGB ◄── Z-buffer ◄── Baricêntrica ◄── Scan-line ◄─
 7. **Iluminação:** Phong nos 3 vértices (ka=0.5, kd=0.8, ks=0.4, brilho=32, luz em (5, 20, 15)).
 8. **Rasterização:** `scan_line_par_impar` lista os pixels do triângulo; para cada pixel, as
    coordenadas baricêntricas interpolam z (teste no Z-buffer) e a cor (Gouraud). Depois,
-   `desenhar_aresta` traça as 3 arestas com Bresenham, na cor iluminada dos vértices.
+   `desenhar_aresta` traça as 3 arestas com a equação da reta, na cor iluminada dos vértices.
 
 ---
 
@@ -131,7 +131,6 @@ combina primitivas de `primitives.py`:
 | `uniao(A, B, …)` | `min` | Juntar peças |
 | `intersecao(A, B, …)` | `max` | Recortar |
 | `subtracao(A, B)` | `max(A, −B)` | Furos / ocos |
-| `uniao_suave(A, B, k)` | smooth-min (Quilez) | Junção arredondada |
 
 Todos os objetos são modelados **no seu próprio sistema de coordenadas**: apoiados em `y = 0`
 e centrados no eixo Y (ou na origem, no caso do altere).
@@ -174,8 +173,8 @@ Combinação: `uniao(corpo, anel, ponta)`. A parte abaixo do anel representa a b
 | 2 esferas | `esfera` | `R_ESFERA = 1.0`, centros em x = ±`X_ESFERA` (±2.0), y = 1.0 |
 | Barra | `cilindro_x` | `R_BARRA = 0.42`, x ∈ [−2, 2], eixo em y = 1.0 |
 
-Combinação: `uniao_suave(esferas, barra, k=0.5)` — a união suave cria a curva na junção
-barra/esfera. Deitado no chão, ao longo de X.
+Combinação: `uniao(esfera_esq, esfera_dir, barra)` — união simples (mínimo), então a junção
+barra/esfera fica com aresta viva. Deitado no chão, ao longo de X.
 
 ### 4.5 Martelo — `gerar_campo_martelo`
 
@@ -256,19 +255,19 @@ Verificações feitas (resolução 80):
       mesmo eixo 3D, os sólidos em coordenadas de câmera e os polígonos visíveis projetados
       no plano da janela; um segundo painel mostra a janela vista de frente (`--eye`, `--salvar`).
 - [x] **Arestas e faces com a mesma cor** por sólido: `main.desenhar_aresta` desenha as
-      arestas de cada face visível com Bresenham, na cor iluminada do sólido.
+      arestas de cada face visível com a equação da reta, na cor iluminada do sólido.
 
 ### Item 5 — Iluminação
 - [x] Phong com ambiente, difusa e especular nos vértices visíveis.
 - [ ] Apenas explicar coeficientes e equações no relatório.
 
 ### Item 6 — Rasterização
-- [x] 3 resoluções (200, 400, 800), scan-line par-ímpar, baricêntrica, Z-buffer, Bresenham.
+- [x] 3 resoluções (200, 400, 800), scan-line par-ímpar, baricêntrica, Z-buffer, equação da reta.
 - [x] **Culling em coordenadas de câmera** (o enunciado pede "normal + eixo z da câmera"):
       `math_3d.face_voltada_para_camera` usa a normal da face (`normais_faces` do sólido, levada
       à câmera) e o vetor até o observador, que na câmera é `-v0`. O teste só pelo sinal de
       `normal_z` foi medido e descartado: abria uma falha visível na borda da lixeira.
-- [ ] Confirmar no livro-texto se a subseção 5.2.1 é Bresenham (o que está implementado).
+- [x] Retas: trocado o Bresenham pelo algoritmo da equação da reta, que é o dado em aula (30/09).
 
 ### Ajustes de cena / qualidade
 - [x] A **lixeira saía cortada** na borda direita da câmera principal (Tela 1). Resolvido

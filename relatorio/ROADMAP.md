@@ -28,7 +28,7 @@ em `main.py` (ver `DOCUMENTACAO.md`, seção 1).
 - [x] 2.3 Sistema da câmera (item 3): base vetorial, transformação, origem do mundo, outros valores de eye
 - [x] 2.4 Projeção em perspectiva (item 4): volume de visão, polígonos não visíveis, cor por sólido
 - [x] 2.5 Iluminação (item 5): Phong, ambiente, difusa e especular
-- [x] 2.6 Rasterização (item 6): culling, Bresenham, scan line par-ímpar, baricêntrica, Z-buffer
+- [x] 2.6 Rasterização (item 6): culling, equação da reta, scan line par-ímpar, baricêntrica, Z-buffer
 
 ## Fase 3: Simulações computacionais
 

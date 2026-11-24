@@ -50,20 +50,6 @@ def subtracao(a, b):
     return np.maximum(a, -b)
 
 
-def uniao_suave(a, b, k=1.0):
-    """
-    União com transição suave (smooth union).
-    Elimina a aresta viva que np.minimum cria na junção entre duas formas.
-    k controla o raio de blend: k pequeno ≈ aresta viva, k grande ≈ fusão ampla.
-
-    Fórmula (Inigo Quilez):
-        h = max(k - |A - B|, 0) / k
-        F = min(A, B) - h²·k/4
-    """
-    h = np.maximum(k - np.abs(a - b), 0.0) / k
-    return np.minimum(a, b) - h * h * k / 4.0
-
-
 # ======================================================================
 # PRIMITIVAS — FORMAS BÁSICAS
 # ======================================================================

@@ -2,7 +2,7 @@ import numpy as np
 from skimage.measure import marching_cubes
 from primitives import (
     cilindro, cilindro_x, cone_truncado, esfera, caixa, toro,
-    uniao, subtracao, uniao_suave
+    uniao, subtracao
 )
 
 
@@ -129,21 +129,18 @@ def gerar_campo_altere(x, y, z):
     Altere simples deitado no chão, ao longo do eixo X:
       - 2 esferas, uma em cada ponta, apoiadas em y=0
       - Barra reta ligando os centros das esferas
-      - uniao_suave cria a curva suave na junção barra/esfera
+      - união simples (mínimo): a junção barra/esfera fica com aresta viva
     """
     R_ESFERA = 1.0        # raio das esferas
     X_ESFERA = 2.0        # distância do centro de cada esfera até a origem
     Y_EIXO   = R_ESFERA   # altura do eixo: esferas encostadas no chão
     R_BARRA  = 0.42       # raio da barra
 
-    esferas = uniao(
-        esfera(x, y, z, cx=-X_ESFERA, cy=Y_EIXO, cz=0, raio=R_ESFERA),
-        esfera(x, y, z, cx= X_ESFERA, cy=Y_EIXO, cz=0, raio=R_ESFERA),
-    )
-
+    esfera_esq = esfera(x, y, z, cx=-X_ESFERA, cy=Y_EIXO, cz=0, raio=R_ESFERA)
+    esfera_dir = esfera(x, y, z, cx= X_ESFERA, cy=Y_EIXO, cz=0, raio=R_ESFERA)
     barra = cilindro_x(x, y, z, raio=R_BARRA, x_min=-X_ESFERA, x_max=X_ESFERA, cy=Y_EIXO)
 
-    return uniao_suave(esferas, barra, k=0.5)
+    return uniao(esfera_esq, esfera_dir, barra)
 
 
 def gerar_campo_martelo(x, y, z):

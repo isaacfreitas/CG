@@ -38,7 +38,7 @@ def projetar(p_mundo, view_matrix, proj_matrix):
 
 
 def desenhar_reta_3d_no_zbuffer(p1_mundo, p2_mundo, cor, imagem, z_buffer, view_matrix, proj_matrix, res):
-    """Projeta e rasteriza uma linha 3D no Z-buffer via Bresenham."""
+    """Projeta e rasteriza uma linha 3D no Z-buffer pela equação da reta."""
     v1_ndc = projetar(p1_mundo, view_matrix, proj_matrix)
     v2_ndc = projetar(p2_mundo, view_matrix, proj_matrix)
 
@@ -48,7 +48,7 @@ def desenhar_reta_3d_no_zbuffer(p1_mundo, p2_mundo, cor, imagem, z_buffer, view_
     x1, y1 = (int(c) for c in ndc_para_pixel(v1_ndc, res))
     x2, y2 = (int(c) for c in ndc_para_pixel(v2_ndc, res))
 
-    pontos = rasterizer.rasterizar_bresenham(x1, y1, x2, y2)
+    pontos = rasterizer.rasterizar_reta(x1, y1, x2, y2)
     n_pts  = len(pontos)
     if n_pts == 0:
         return
@@ -64,7 +64,7 @@ def desenhar_reta_3d_no_zbuffer(p1_mundo, p2_mundo, cor, imagem, z_buffer, view_
 
 def desenhar_aresta(p1, p2, z1, z2, cor1, cor2, imagem, z_buffer):
     """
-    Desenha a aresta de uma face com Bresenham, já em coordenadas de pixel. A cor e a
+    Desenha a aresta de uma face com a equação da reta, já em coordenadas de pixel. A cor e a
     profundidade variam linearmente entre os extremos, então a aresta tem a cor iluminada
     do próprio sólido. Usa o Z-buffer sem folga: só preenche o que ainda não está coberto.
     """
@@ -73,7 +73,7 @@ def desenhar_aresta(p1, p2, z1, z2, cor1, cor2, imagem, z_buffer):
     if any(abs(c) > 2 * res for c in (*p1, *p2)):
         return
 
-    pontos = rasterizer.rasterizar_bresenham(p1[0], p1[1], p2[0], p2[1])
+    pontos = rasterizer.rasterizar_reta(p1[0], p1[1], p2[0], p2[1])
     for idx, (px, py) in enumerate(pontos):
         if 0 <= px < res and 0 <= py < res:
             t = idx / max(len(pontos) - 1, 1)
@@ -121,7 +121,7 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
       5. Scan-line par-ímpar → pixels internos do triângulo
       6. Interpolação baricêntrica de cor e profundidade Z
       7. Z-buffer → escreve o pixel mais próximo
-      8. Arestas da face com Bresenham, na cor iluminada dos vértices
+      8. Arestas da face com a equação da reta, na cor iluminada dos vértices
     """
     imagem   = np.full((resolucao_tela, resolucao_tela, 3), 245, dtype=np.uint8)
     # Z-buffer (extra, não visto em aula): guarda a profundidade do que já foi pintado em cada pixel.
@@ -217,7 +217,7 @@ def renderizar_cena_completa(resolucao_tela, view_matrix, proj_matrix, objetos_c
                                      + gamma * cores_vertices[2])
                         imagem[y, x] = (np.clip(cor_pixel, 0.0, 1.0) * 255).astype(np.uint8)
 
-            # Estágio 8: arestas da face com Bresenham, na cor iluminada dos vértices.
+            # Estágio 8: arestas da face com a equação da reta, na cor iluminada dos vértices.
             # Fecham as frestas que o scan-line deixa nas bordas dos triângulos.
             c0, c1, c2 = cores_vertices
             for p1, p2, z1, z2, cor1, cor2 in [(pA, pB, zA, zB, c0, c1),

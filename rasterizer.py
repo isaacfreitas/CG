@@ -1,44 +1,46 @@
 import numpy as np
+import math
 
 
-def rasterizar_bresenham(x1, y1, x2, y2):
+def produz_fragmento(x, y):
     """
-    Algoritmo de Bresenham operando estritamente com inteiros.
-    Elimina a necessidade de divisões de ponto flutuante do DDA.
+    Pixel que contém o ponto (x, y): a parte inteira de cada coordenada.
+    O centro desse pixel é (int(x) + 0,5, int(y) + 0,5). A folga 1e-9 evita que um
+    valor como 2,9999999 (erro de ponto flutuante) caia no pixel anterior.
     """
-    pontos = []
+    return (math.floor(x + 1e-9), math.floor(y + 1e-9))
+
+
+def rasterizar_reta(x1, y1, x2, y2):
+    """
+    Algoritmo da equação da reta: y = m·x + b.
+    Se |dx| > |dy| a reta é mais deitada e anda-se de 1 em 1 em x, calculando y = m·x + b.
+    Senão ela é mais em pé e anda-se de 1 em 1 em y, calculando x = (y − b)/m.
+    Os pontos saem na ordem de (x1, y1) para (x2, y2), porque quem chama interpola cor e z
+    pela posição na lista.
+
+    Além do quadro: os extremos viram inteiros (o laço sempre termina), o passo pode ser
+    −1 (reta da direita para a esquerda ou de cima para baixo) e a reta vertical (m infinito)
+    é tratada à parte.
+    """
     x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+    dx, dy = x2 - x1, y2 - y1
 
-    dx = abs(x2 - x1)
-    dy = abs(y2 - y1)
+    if dx == 0 and dy == 0:
+        return [(x1, y1)]
 
-    # Determina a direção (sinal) do incremento
-    sx = 1 if x1 < x2 else -1
-    sy = 1 if y1 < y2 else -1
+    if abs(dx) > abs(dy):                       # mais deitada: anda em x
+        m = dy / dx
+        b = y1 - m * x1
+        passo = 1 if dx > 0 else -1
+        return [produz_fragmento(x, m * x + b) for x in range(x1, x2 + passo, passo)]
 
-    # Variável de erro (decisão de avanço)
-    err = dx - dy
-
-    while True:
-        pontos.append((x1, y1))
-
-        # Condição de parada rigorosa ao atingir o vértice destino
-        if x1 == x2 and y1 == y2:
-            break
-
-        e2 = 2 * err
-
-        # Avanço no eixo X
-        if e2 > -dy:
-            err -= dy
-            x1 += sx
-
-        # Avanço no eixo Y
-        if e2 < dx:
-            err += dx
-            y1 += sy
-
-    return pontos
+    passo = 1 if dy > 0 else -1                 # mais em pé: anda em y
+    if dx == 0:                                 # vertical: m infinito, x não muda
+        return [(x1, y) for y in range(y1, y2 + passo, passo)]
+    m = dy / dx
+    b = y1 - m * x1
+    return [produz_fragmento((y - b) / m, y) for y in range(y1, y2 + passo, passo)]
 
 
 def calcular_area_triangulo(xa, ya, xb, yb, xc, yc):

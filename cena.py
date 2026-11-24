@@ -33,11 +33,11 @@ POSICAO_LUZ   = np.array([5.0, 20.0, 15.0])    # Posição da fonte de luz no es
 # escala  : fator em x, y e z.
 CENA = [
     # Peão: só ampliado.
-    {"nome": "Peão",    "posicao": (-6.5, -4.5), "rotacao": (0, 0, 0),     "escala": (1.2, 1.2, 1.2)},
+    {"nome": "Peão",    "posicao": (-6.5, -4.5), "rotacao": (0, 0, 0),     "escala": (0.8, 0.8, 0.8)},
     # Lápis: deitado (90° em x) e girado 45° em y, na diagonal do chão.
     {"nome": "Lápis",   "posicao": (-8.0,  0.5), "rotacao": (90, 45, 0),   "escala": (1.0, 1.0, 1.0)},
     # Altere: modelado deitado; 90° em z o deixa em pé sobre uma das esferas. Reduzido.
-    {"nome": "Altere",  "posicao": (-1.5, -4.5), "rotacao": (0, 0, 90),    "escala": (0.9, 0.9, 0.9)},
+    {"nome": "Altere",  "posicao": (-1.5, -4.5), "rotacao": (0, 0, 90),    "escala": (1.2, 1.2, 1.2)},
     # Martelo: deitado com a cabeça apoiada no chão (-90° em x) e girado -30° em y.
     {"nome": "Martelo", "posicao": ( 1.0,  3.2), "rotacao": (-90, -30, 0), "escala": (1.0, 1.0, 1.0)},
     # Lixeira: só ampliada.
