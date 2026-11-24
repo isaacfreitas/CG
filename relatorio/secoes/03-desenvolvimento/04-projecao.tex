@@ -1,88 +1,22 @@
 % Etapa 4 do enunciado: projeção em perspectiva.
 % Fonte no código: math_3d.py (projecao_perspectiva, divisao_perspectiva), main.py (ndc_para_pixel)
-% Fonte do recorte: math_3d.face_no_volume_de_visao. Figura do item 4a: visualizar_projecao.py (salva pelo botão de salvar da janela).
+% Figura do item 4a: visualizar_projecao.py (salva pelo botão de salvar da janela).
 \subsection{Projeção em perspectiva}\label{sec:projecao}
 
-Na projeção em perspectiva, objetos mais longe da câmera aparecem menores \cite{azevedo2018}. O
-volume de visão é
-definido por quatro valores: o ângulo de abertura vertical (\textit{fov}), a proporção da janela
-(\textit{aspecto}) e as distâncias do plano próximo (\textit{near}) e do plano distante
-(\textit{far}). Neste trabalho, $fov = 58^\circ$, $aspecto = 1$, $near = 0{,}1$ e $far = 100$.
-Com $f = 1 / \tan(fov / 2)$, a matriz de projeção é
+Na projeção em perspectiva, objetos mais distantes aparecem menores \cite{azevedo2018}. O volume de
+visão é definido pelo ângulo de abertura vertical ($fov = 58^\circ$), pela proporção da janela
+($1$) e pelas distâncias dos planos próximo ($0{,}1$) e distante ($100$). Dele sai o valor
+$f = \cot(fov/2)$, que corresponde ao $d$ da aula: a posição projetada é
 
 \begin{equation}
-  P = \begin{bmatrix}
-    f/aspecto & 0 & 0 & 0 \\
-    0 & f & 0 & 0 \\
-    0 & 0 & \dfrac{far + near}{near - far} & \dfrac{2 \cdot far \cdot near}{near - far} \\
-    0 & 0 & -1 & 0
-  \end{bmatrix}.
+  x' = d \cdot \frac{x}{z} .
 \end{equation}
 
-O código multiplica cada vértice, já no sistema da câmera, por $P$. Depois divide o resultado pela
-coordenada $w$, que guarda a distância do ponto à câmera. Essa divisão dá as coordenadas
-normalizadas (NDC, do inglês \textit{normalized device coordinates}), entre $-1$ e $1$. Em seguida,
-o código converte essas coordenadas para pixels da janela de projeção de $res \times res$ pixels:
+Como $z$ está no denominador, quanto mais longe o ponto, mais perto do centro ele fica. No código,
+essa conta é feita com uma matriz $4 \times 4$ e uma divisão final pela coordenada $w$. O resultado
+são coordenadas entre $-1$ e $1$, que depois são convertidas em pixels da janela de projeção.
+Triângulos fora do volume de visão ou voltados para trás não são iluminados nem rasterizados
+(Seção~\ref{sec:rasterizacao}). A Figura~\ref{fig:projecao} mostra, à esquerda, os sólidos em 3D
+no sistema da câmera com a janela de projeção e, à direita, a janela vista de frente.
 
-\begin{equation}
-  x_{pixel} = \frac{x_{ndc} + 1}{2} \cdot res, \qquad
-  y_{pixel} = \frac{1 - y_{ndc}}{2} \cdot res .
-\end{equation}
-
-O código projeta um triângulo de cada vez. Ele não projeta os triângulos voltados para longe da
-câmera (Seção~\ref{sec:rasterizacao}). Cada objeto tem uma cor própria, e as faces e as arestas
-dele usam essa mesma cor.
-
-Antes da divisão por $w$, o código também confere se cada triângulo está dentro do volume de visão.
-Nas coordenadas depois da multiplicação por $P$, um ponto está dentro do volume quando
-$-w \le x \le w$, $-w \le y \le w$ e $-w \le z \le w$. Cada desigualdade é um dos seis planos do
-volume: esquerda, direita, baixo, cima, \textit{near} e \textit{far}. O código descarta o triângulo
-inteiro em dois casos:
-
-\begin{itemize}
-  \item algum vértice está atrás do plano \textit{near}. Depois da divisão por $w$, esse vértice
-        ficaria do lado errado da câmera e deformaria o triângulo;
-  \item os três vértices estão fora do mesmo plano. Se estivessem fora de planos diferentes, o
-        triângulo ainda poderia cruzar a tela.
-\end{itemize}
-
-Esse recorte não corta o triângulo em pedaços. Ele só decide se o triângulo inteiro entra ou não.
-A Figura~\ref{fig:frustum} mostra o volume de visão visto de lado e como um ponto do objeto vira
-um ponto na janela de projeção.
-
-\begin{figure}[H]
-  \centering
-  \caption{Volume de visão e janela de projeção, vistos de lado}\label{fig:frustum}
-  \begin{tikzpicture}[>=Stealth, scale=1.1]
-    \coordinate (eye) at (0,0);
-    \fill (eye) circle (2pt) node[left] {$eye$};
-    % volume de visão: linhas do eye até o plano far
-    \draw (eye) -- (9,2.9);
-    \draw (eye) -- (9,-2.9);
-    % plano near e plano far
-    \draw[thick] (1.0,-0.32) -- (1.0,0.32);
-    \node[below] at (1.0,-0.4) {\small \textit{near}};
-    \draw[thick] (9,-2.9) -- (9,2.9);
-    \node[below] at (9,-2.9) {\small \textit{far}};
-    % janela de projeção
-    \draw[very thick] (3,-0.97) -- (3,0.97);
-    \node[below] at (3,-1.05) {\small janela de projeção};
-    % objeto (triângulo visto de lado) e projeção
-    \draw[fill=gray!30] (6,-0.7) -- (6,1.6) -- (7.2,0.3) -- cycle;
-    \draw[dashed] (eye) -- (6,1.6);
-    \fill (3,0.8) circle (1.5pt);
-    \fill (6,1.6) circle (1.5pt);
-    \node[above right] at (6,1.6) {\small ponto do objeto};
-    \node[above left] at (3,0.8) {\small projeção};
-    % ângulo de abertura
-    \draw (1.52,-0.49) arc (-18:18:1.6);
-    \node at (2.15,0) {$fov$};
-  \end{tikzpicture}
-  \fonte{Adaptado de \textcite{azevedo2018}.}
-\end{figure}
-
-A Figura~\ref{fig:projecao} mostra, à esquerda, os sólidos em 3D no sistema da câmera com a janela
-de projeção. À direita, mostra a mesma janela vista de frente, só com os polígonos projetados. Uma
-reta pontilhada liga o \textit{eye} ao centro de cada sólido e cruza a janela no ponto projetado.
-
-\figura{03-desenvolvimento/04-projecao/eye1.png}{\textwidth}{Sólidos em 3D e projeção na janela, com $eye = (9{,}75;\ 13;\ 6{,}5)$}{fig:projecao}{Os autores (2026)}
+\figura{03-desenvolvimento/04-projecao/eye1.png}{\textwidth}{Sólidos em 3D e projeção na janela, com $eye = (9{,}75;\ 13;\ 6{,}5)$}{fig:projecao}{Autoria própria (2026)}

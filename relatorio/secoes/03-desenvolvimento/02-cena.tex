@@ -1,42 +1,19 @@
 % Etapa 2 do enunciado: cena no sistema de coordenadas do mundo.
 % Fonte no código: math_3d.py (rotacao_x/y/z, matriz_mundo), cena.py (CENA, montar_cena, validar_cena)
-% Figura: visualizar_cena.py (salva pelo botão de salvar da janela; a opção --salvar existiu até o commit 098594f).
+% Figura: visualizar_cena.py (salva pelo botão de salvar da janela).
 \subsection{Composição da cena}\label{sec:cena}
 
-Para colocar os objetos no sistema de coordenadas do mundo, cada vértice passa por escala,
-rotação em torno de $x$, de $y$ e de $z$ e, por fim, translação. Todas são matrizes $4 \times 4$.
-Elas usam coordenadas homogêneas, que acrescentam um quarto número ($w$) a cada ponto. Assim, a
-translação também vira uma multiplicação de matriz \cite{azevedo2018}. O produto das matrizes é a
-matriz do mundo:
+Cada vértice vai para o sistema do mundo por escala, rotação em $x$, $y$ e $z$ e translação. As
+matrizes são $4 \times 4$ em coordenadas homogêneas, o que permite tratar a translação também como
+produto de matrizes \cite{azevedo2018}. $R_x$, $R_y$ e $R_z$ são as rotações em torno de cada eixo,
+vistas em aula. A matriz do mundo é
 
 \begin{equation}
-  M_{mundo} = T \cdot R_z \cdot R_y \cdot R_x \cdot S .
+  M = T \cdot R_z \cdot R_y \cdot R_x \cdot S .
 \end{equation}
 
-O produto é lido da direita para a esquerda: a escala e as rotações acontecem em torno da origem do
-objeto, e só depois a translação o leva até a sua posição. As rotações em torno de $x$ e de $z$ são
-
-\begin{equation}
-  R_x(\theta) =
-  \begin{bmatrix}
-    1 & 0 & 0 & 0\\
-    0 & \cos\theta & -\sin\theta & 0\\
-    0 & \sin\theta & \cos\theta & 0\\
-    0 & 0 & 0 & 1
-  \end{bmatrix},
-  \qquad
-  R_z(\theta) =
-  \begin{bmatrix}
-    \cos\theta & -\sin\theta & 0 & 0\\
-    \sin\theta & \cos\theta & 0 & 0\\
-    0 & 0 & 1 & 0\\
-    0 & 0 & 0 & 1
-  \end{bmatrix}.
-\end{equation}
-
-A Tabela~\ref{tab:cena} mostra as transformações de cada objeto. O chão fica em $y = -2$. A
-translação em $y$ não é escolhida à mão: o código aplica primeiro $R \cdot S$, encontra o vértice
-mais baixo e escolhe $t_y$ para que ele encoste no chão.
+O produto é lido da direita para a esquerda: escala e rotações ocorrem na origem do objeto, e a
+translação o leva à posição final. A Tabela~\ref{tab:cena} traz os valores de cada objeto.
 
 \begin{table}[H]
   \centering
@@ -52,22 +29,18 @@ mais baixo e escolhe $t_y$ para que ele encoste no chão.
     Lixeira & 1,1 & $(0^\circ, 0^\circ, 0^\circ)$     & $(3{,}5;\ -4{,}5)$  & ampliada \\
     \bottomrule
   \end{tabular}
-  \fonte{Os autores (2026).}
+  \fonte{Autoria própria (2026)}
 \end{table}
 
-A função \texttt{validar\_cena} confere a cena automaticamente. Ela verifica duas coisas:
+A função \texttt{validar\_cena} confere duas regras:
 
 \begin{itemize}
-  \item \textbf{Limite $|10|$}: nenhuma componente de nenhum vértice, depois de transformado, pode
-        passar de 10. O maior valor na cena é $8{,}46$ (eixo $x$ do lápis).
-  \item \textbf{Sobreposição}: cada objeto é envolvido pela menor caixa alinhada aos eixos que o
-        contém. Duas caixas estão separadas quando, em pelo menos um eixo, uma termina antes de a
-        outra começar. Se as caixas não se cruzam, os objetos também não. Exigimos ainda uma folga
-        de $0{,}1$ entre elas.
+  \item \textbf{limite $|10|$}: nenhuma componente de vértice transformado passa de 10. O maior
+        valor é $8{,}46$ (eixo $x$ do lápis);
+  \item \textbf{sem sobreposição}: as caixas que envolvem os objetos, alinhadas aos eixos, ficam
+        separadas em pelo menos um eixo.
 \end{itemize}
 
-Se alguma regra falhar, o programa para e diz quais objetos causaram o problema. A
-Figura~\ref{fig:cena-mundo} mostra a cena, com os eixos, a origem do mundo e o cubo
-$[-10, 10]^3$.
+A Figura~\ref{fig:cena-mundo} mostra a cena com os eixos, a origem e o cubo $[-10, 10]^3$.
 
-\figura{03-desenvolvimento/02-cena/cena-mundo.png}{0.65\textwidth}{Cena no sistema de coordenadas do mundo}{fig:cena-mundo}{Os autores (2026)}
+\figura{03-desenvolvimento/02-cena/cena-mundo.png}{0.6\textwidth}{Cena no sistema de coordenadas do mundo}{fig:cena-mundo}{Autoria própria (2026)}

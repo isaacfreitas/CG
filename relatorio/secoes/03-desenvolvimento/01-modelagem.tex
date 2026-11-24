@@ -3,51 +3,21 @@
 % Função que retorna o sólido: modeling.criar_solido. Figuras: visualizar_objetos.py (salvas pelo botão de salvar da janela).
 \subsection{Modelagem dos objetos}\label{sec:modelagem}
 
-Foram modelados cinco objetos do cotidiano: lápis, peão de xadrez, haltere, martelo e lixeira. Cada
-objeto fica no seu próprio sistema de coordenadas, apoiado em $y = 0$ e centrado no eixo $y$. O
-haltere é o único deitado, ao longo do eixo $x$.
+Os cinco objetos foram modelados cada um no seu sistema de coordenadas, apoiados em $y = 0$ e
+centrados no eixo $y$. Só o haltere fica deitado, ao longo do eixo $x$.
 
-Cada objeto é descrito por uma função $F(x, y, z)$, chamada de superfície implícita. Ela diz se um
-ponto está dentro ($F < 0$), na superfície ($F = 0$) ou fora ($F > 0$) do objeto. Por exemplo, para uma esfera de raio $r$ e centro
-$(c_x, c_y, c_z)$:
-
-\begin{equation}
-  F(x, y, z) = (x - c_x)^2 + (y - c_y)^2 + (z - c_z)^2 - r^2 .
-\end{equation}
-
-Os objetos são montados juntando formas simples (cilindro, cone, esfera, caixa e toro). A união usa
-o mínimo entre as funções e a subtração usa $\max(A, -B)$, que serve para deixar a lixeira oca.
-
-Para obter os triângulos, a função é calculada em uma grade 3D com 80 pontos por eixo e entregue ao
+Cada objeto é uma função $F(x, y, z)$ que vale menos que zero dentro do objeto, zero na superfície e
+mais que zero fora. Formas simples (cilindro, cone, esfera, caixa e toro) são combinadas: a união é
+o mínimo entre as funções e a subtração é $\max(A, -B)$, usada para deixar a lixeira oca. O
 algoritmo \textit{Marching Cubes} \cite{lorensen1987}, da biblioteca scikit-image
-\cite{vanderwalt2014}. Ele devolve os vértices, as faces (três índices de vértices cada) e uma
-normal por vértice. Essas normais saem apontando para dentro, então o código troca o sinal para que
-apontem para fora. A normal de cada face é o produto vetorial $(v_1 - v_0) \times (v_2 - v_0)$.
+\cite{vanderwalt2014}, recebe $F$ em uma grade de 80 pontos por eixo e devolve os triângulos de
+$F = 0$.
 
-Como pede o enunciado, a função \texttt{criar\_solido} (em \texttt{modeling.py}) devolve o sólido
-completo, em coordenadas do objeto:
-
-\begin{itemize}
-  \item \textbf{vértices}: matriz $V \times 3$ com as coordenadas $(x, y, z)$;
-  \item \textbf{faces}: matriz $F \times 3$, cada linha com os índices dos três vértices de um
-        triângulo;
-  \item \textbf{arestas}: matriz $A \times 2$ com os pares de vértices ligados. Cada triângulo tem
-        três arestas e cada aresta é compartilhada por dois triângulos, então os pares são
-        ordenados e os repetidos são removidos;
-  \item \textbf{normais das faces}: vetor unitário de cada triângulo, apontando para fora;
-  \item \textbf{normais dos vértices}: vetor unitário de cada vértice, apontando para fora;
-  \item \textbf{cor}: RGB do sólido, a mesma para faces e arestas.
-\end{itemize}
-
-Para garantir que a normal de cada face aponta para fora, o código compara essa normal com a média
-das normais dos três vértices. Se o produto escalar der negativo, o código inverte a normal e a
-ordem dos vértices da face. Dois testes confirmam o resultado nos cinco objetos. No primeiro, o
-volume calculado pelas faces (pelo teorema da divergência, que soma a contribuição de cada
-triângulo) é positivo, o que só acontece com as normais para fora. No segundo, toda malha satisfaz
-$V - A + F = 2$, ou seja, é uma superfície fechada, sem buracos.
-
-A Figura~\ref{fig:objetos} mostra os objetos, cada um no seu sistema, com os eixos e as normais de
-algumas faces (setas pretas).
+A função \texttt{criar\_solido} devolve vértices, faces, arestas, normais das faces, normais dos
+vértices e cor, tudo em coordenadas do objeto. As normais apontam para fora. Em todos os objetos, a
+malha satisfaz $V - A + F = 2$, o que indica superfície fechada e sem buracos. A
+Figura~\ref{fig:objetos} mostra os objetos com os eixos e as normais de algumas faces (setas
+pretas), em uma grade de 50 pontos por eixo, mais leve para exibir. A cena usa 80 pontos.
 
 \begin{figure}[H]
   \centering
@@ -79,5 +49,5 @@ algumas faces (setas pretas).
     \includegraphics[width=\textwidth]{03-desenvolvimento/01-modelagem/lixeira.png}
     \caption{Lixeira}
   \end{subfigure}
-  \fonte{Os autores (2026).}
+  \fonte{Autoria própria (2026)}
 \end{figure}

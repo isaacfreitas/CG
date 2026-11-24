@@ -4,16 +4,16 @@
 % =====================================================================
 \section{Conclusão}\label{sec:conclusao}
 
-Neste trabalho, o grupo fez todos os passos para desenhar uma cena 3D na tela. Foram criados cinco
-objetos do dia a dia, e cada um virou uma malha de triângulos. Depois, os objetos foram colocados
-juntos na cena, vistos por uma câmera, projetados em perspectiva, iluminados e pintados em três
-tamanhos de imagem.
+O grupo implementou todas as etapas do pipeline gráfico e renderizou uma cena com cinco objetos.
+Todas as malhas satisfazem $V - A + F = 2$. A cena respeita o limite $|10|$, com maior valor
+$8{,}46$, e não tem objetos sobrepostos. A imagem foi gerada para dois valores de \textit{eye} e em
+três resoluções.
 
-Os resultados mostram o que cada passo faz. Mudar o \textit{eye} muda o ponto de vista. A luz dá a
-sensação de volume aos objetos. O Z-buffer faz o objeto da frente esconder o de trás. Quanto maior a
-imagem, mais lisos ficam os contornos.
+No \textit{eye} principal, 30\,248 dos 62\,452 triângulos foram desenhados, 32\,204 foram
+descartados por estarem de costas e nenhum ficou fora do volume de visão.
+O Z-buffer fez o objeto da frente esconder o de trás, e os contornos ficaram mais lisos com mais
+pixels.
 
-Ainda há o que melhorar. O recorte descarta o triângulo inteiro em vez de cortar só a parte de
-fora. A renderização também é lenta, porque roda em Python puro. Como próximos passos, o código
-poderia cortar os triângulos que cruzam o volume de visão e usar mais recursos da máquina para
-desenhar mais rápido.
+O recorte descarta o triângulo inteiro em vez de cortar só a parte de fora. O tempo de
+rasterização cresce com a resolução, de 0,8 s a 1,4 s, e o código roda em Python, sem
+aceleração. Há espaço para otimizar.
